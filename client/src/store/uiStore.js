@@ -1,5 +1,7 @@
 import { create } from 'zustand'
 
+const isMobile = () => window.innerWidth < 768
+
 export const useUIStore = create((set) => ({
   notifications: [],
 
@@ -16,8 +18,9 @@ export const useUIStore = create((set) => ({
 
   clearNotifications: () => set({ notifications: [] }),
 
-  sidebarOpen: true,
+  sidebarOpen: !isMobile(),
   toggleSidebar: () => set((state) => ({ sidebarOpen: !state.sidebarOpen })),
+  closeSidebar: () => set({ sidebarOpen: false }),
 
   activeAccent: '#adc6ff',
   setAccent: (color) => {

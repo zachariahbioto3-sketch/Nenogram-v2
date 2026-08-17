@@ -9,4 +9,5 @@ urlpatterns = [
     path('token/refresh/', TokenRefreshView.as_view(), name='token_refresh'),
     path('me/', views.me, name='me'),
     path('developer/upgrade/', views.upgrade_to_developer, name='developer_upgrade'),
+    path('profile/<str:username>/', views.public_profile, name='public_profile'),
 ]

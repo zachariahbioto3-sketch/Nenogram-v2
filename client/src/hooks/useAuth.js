@@ -1,13 +1,13 @@
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
-import { useNavigate } from "react-router-dom"
-import { authAPI } from "../api/auth"
-import { useAuthStore } from "../store/authStore"
-import { useUIStore } from "../store/uiStore"
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import { useNavigate } from 'react-router-dom'
+import { authAPI } from '../api/auth'
+import { useAuthStore } from '../store/authStore'
+import { useUIStore } from '../store/uiStore'
 
 export function useMe() {
   const isAuthenticated = useAuthStore((s) => s.isAuthenticated)
   return useQuery({
-    queryKey: ["me"],
+    queryKey: ['me'],
     queryFn: () => authAPI.me().then((r) => r.data),
     enabled: isAuthenticated,
   })
@@ -22,12 +22,17 @@ export function useLogin() {
     onSuccess: (res) => {
       setTokens(res.data.access, res.data.refresh)
       setUser(res.data.user)
-      addNotification("Welcome back " + res.data.user.username, "success")
-      navigate("/")
+      addNotification('Welcome back ' + res.data.user.username, 'success')
+      navigate('/')
     },
     onError: (err) => {
-      const msg = err.response?.data?.non_field_errors?.[0] || "Login failed"
-      addNotification(msg, "error")
+      const data = err.response?.data
+      const msg = data?.non_field_errors?.[0]
+        || data?.detail
+        || (typeof data === 'string' ? data : null)
+        || Object.values(data || {}).flat()[0]
+        || 'Login failed'
+      addNotification(msg, 'error')
     },
   })
 }
@@ -41,13 +46,13 @@ export function useRegister() {
     onSuccess: (res) => {
       setTokens(res.data.access, res.data.refresh)
       setUser(res.data.user)
-      addNotification("Account created successfully", "success")
-      navigate("/")
+      addNotification('Account created successfully', 'success')
+      navigate('/')
     },
     onError: (err) => {
       const errors = err.response?.data
-      const msg = errors ? Object.values(errors).flat()[0] : "Registration failed"
-      addNotification(msg, "error")
+      const msg = errors ? Object.values(errors).flat()[0] : 'Registration failed'
+      addNotification(msg, 'error')
     },
   })
 }
@@ -62,8 +67,27 @@ export function useLogout() {
     onSettled: () => {
       logout()
       queryClient.clear()
-      addNotification("Logged out", "info")
-      navigate("/login")
+      addNotification('Logged out', 'info')
+      navigate('/login')
+    },
+  })
+}
+
+export function useUpgradeDeveloper() {
+  const setUser = useAuthStore((s) => s.setUser)
+  const addNotification = useUIStore((s) => s.addNotification)
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: authAPI.upgradeDeveloper,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['me'] })
+      authAPI.me().then((r) => setUser(r.data))
+      addNotification('Developer profile activated!', 'success')
+    },
+    onError: (err) => {
+      const errors = err.response?.data
+      const msg = errors ? Object.values(errors).flat()[0] : 'Upgrade failed'
+      addNotification(msg, 'error')
     },
   })
 }

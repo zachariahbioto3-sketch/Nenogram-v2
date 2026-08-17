@@ -1,1 +1,181 @@
-export default function MarketplacePage() { return <div style={{color:'var(--text-primary)',padding:'2rem'}}>Marketplace</div> }
+import { useState } from 'react'
+import { useAuthStore } from '../../store/authStore'
+import { useGigs, useCategories, useCreateGig } from '../../hooks/useMarketplace'
+
+function GigCard({ gig }) {
+  return (
+    <div style={{ background: 'var(--bg-secondary)', border: '1px solid var(--border)', borderRadius: 'var(--radius-lg)', padding: '18px', display: 'flex', flexDirection: 'column', gap: '10px', cursor: 'pointer', transition: 'border-color var(--transition)' }}
+      onMouseEnter={(e) => e.currentTarget.style.borderColor = 'var(--border-accent)'}
+      onMouseLeave={(e) => e.currentTarget.style.borderColor = 'var(--border)'}
+    >
+      {gig.category && (
+        <span style={{ fontSize: '10px', fontFamily: 'var(--font-mono)', color: 'var(--accent)', background: 'var(--accent-dim)', padding: '2px 8px', borderRadius: 'var(--radius-sm)', alignSelf: 'flex-start' }}>
+          {gig.category.name}
+        </span>
+      )}
+      <div style={{ fontSize: '14px', fontWeight: 600, color: 'var(--text-primary)', lineHeight: 1.4 }}>{gig.title}</div>
+      <div style={{ fontSize: '12px', color: 'var(--text-secondary)', lineHeight: 1.5, overflow: 'hidden', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical' }}>
+        {gig.description}
+      </div>
+      {gig.tags && gig.tags.length > 0 && (
+        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '4px' }}>
+          {gig.tags.slice(0, 3).map((tag) => (
+            <span key={tag} style={{ fontSize: '10px', color: 'var(--text-muted)', background: 'var(--bg-tertiary)', border: '1px solid var(--border)', padding: '2px 6px', borderRadius: 'var(--radius-sm)' }}>{tag}</span>
+          ))}
+        </div>
+      )}
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: '4px', paddingTop: '10px', borderTop: '1px solid var(--border)' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '7px' }}>
+          <div style={{ width: '24px', height: '24px', borderRadius: '50%', background: 'var(--accent-dim)', border: '1px solid var(--border-accent)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            <span style={{ fontSize: '10px', color: 'var(--accent)', fontWeight: 700 }}>{gig.developer.username[0].toUpperCase()}</span>
+          </div>
+          <span style={{ fontSize: '12px', color: 'var(--text-secondary)' }}>{gig.developer.username}</span>
+        </div>
+        <div style={{ textAlign: 'right' }}>
+          <div style={{ fontSize: '14px', fontWeight: 700, color: 'var(--text-primary)' }}>KES {Number(gig.price).toLocaleString()}</div>
+          <div style={{ fontSize: '10px', color: 'var(--text-muted)' }}>{gig.delivery_days}d delivery</div>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+function CreateGigModal({ onClose }) {
+  const { mutate: createGig, isPending } = useCreateGig()
+  const { data: categories } = useCategories()
+  const [form, setForm] = useState({ title: '', description: '', price: '', delivery_days: '7', tags: '', category_id: '' })
+  const [errors, setErrors] = useState({})
+
+  const set = (field) => (e) => setForm((f) => ({ ...f, [field]: e.target.value }))
+
+  const handleSubmit = () => {
+    const errs = {}
+    if (!form.title.trim()) errs.title = 'Title required'
+    if (!form.description.trim()) errs.description = 'Description required'
+    if (!form.price || isNaN(form.price) || Number(form.price) <= 0) errs.price = 'Valid price required'
+    if (Object.keys(errs).length) { setErrors(errs); return }
+    setErrors({})
+    createGig({
+      title: form.title.trim(),
+      description: form.description.trim(),
+      price: Number(form.price),
+      delivery_days: Number(form.delivery_days) || 7,
+      tags: form.tags.split(',').map((t) => t.trim()).filter(Boolean),
+      category_id: form.category_id ? Number(form.category_id) : null,
+    }, { onSuccess: onClose })
+  }
+
+  const inputStyle = (field) => ({
+    width: '100%', padding: '9px 12px', background: 'var(--bg-tertiary)',
+    border: '1px solid ' + (errors[field] ? 'var(--danger)' : 'var(--border)'),
+    borderRadius: 'var(--radius-md)', color: 'var(--text-primary)',
+    fontSize: '14px', outline: 'none', boxSizing: 'border-box',
+  })
+
+  return (
+    <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.7)', zIndex: 200, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '16px' }}>
+      <div style={{ background: 'var(--bg-elevated)', border: '1px solid var(--border)', borderRadius: 'var(--radius-xl)', padding: '28px', width: '100%', maxWidth: '460px', maxHeight: '90vh', overflowY: 'auto' }}>
+        <div style={{ fontSize: '16px', fontWeight: 700, color: 'var(--text-primary)', marginBottom: '20px' }}>Post a Gig</div>
+        {[
+          { label: 'title', field: 'title', placeholder: 'e.g. I will build your React app' },
+          { label: 'price (KES)', field: 'price', placeholder: 'e.g. 5000', type: 'number' },
+          { label: 'delivery days', field: 'delivery_days', placeholder: '7', type: 'number' },
+          { label: 'tags (comma separated)', field: 'tags', placeholder: 'e.g. react, api, mobile' },
+        ].map(({ label, field, placeholder, type }) => (
+          <div key={field} style={{ marginBottom: '12px' }}>
+            <label style={{ fontSize: '11px', color: 'var(--text-muted)', display: 'block', marginBottom: '5px', fontFamily: 'var(--font-mono)' }}>{label}</label>
+            <input type={type || 'text'} value={form[field]} onChange={set(field)} placeholder={placeholder} style={inputStyle(field)} />
+            {errors[field] && <div style={{ fontSize: '11px', color: 'var(--danger)', marginTop: '3px' }}>{errors[field]}</div>}
+          </div>
+        ))}
+        <div style={{ marginBottom: '12px' }}>
+          <label style={{ fontSize: '11px', color: 'var(--text-muted)', display: 'block', marginBottom: '5px', fontFamily: 'var(--font-mono)' }}>description</label>
+          <textarea value={form.description} onChange={set('description')} placeholder='Describe what you offer...' rows={4} style={{ ...inputStyle('description'), resize: 'vertical', fontFamily: 'inherit' }} />
+          {errors.description && <div style={{ fontSize: '11px', color: 'var(--danger)', marginTop: '3px' }}>{errors.description}</div>}
+        </div>
+        {categories && categories.length > 0 && (
+          <div style={{ marginBottom: '20px' }}>
+            <label style={{ fontSize: '11px', color: 'var(--text-muted)', display: 'block', marginBottom: '5px', fontFamily: 'var(--font-mono)' }}>category</label>
+            <select value={form.category_id} onChange={set('category_id')} style={{ ...inputStyle('category_id'), cursor: 'pointer' }}>
+              <option value=''>No category</option>
+              {categories.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
+            </select>
+          </div>
+        )}
+        <div style={{ display: 'flex', gap: '10px' }}>
+          <button onClick={onClose} style={{ flex: 1, padding: '10px', background: 'transparent', border: '1px solid var(--border)', borderRadius: 'var(--radius-md)', color: 'var(--text-secondary)', fontSize: '13px', cursor: 'pointer' }}>Cancel</button>
+          <button onClick={handleSubmit} disabled={isPending} style={{ flex: 1, padding: '10px', background: 'var(--accent)', border: 'none', borderRadius: 'var(--radius-md)', color: '#0a0a0a', fontWeight: 700, fontSize: '13px', cursor: isPending ? 'not-allowed' : 'pointer', opacity: isPending ? 0.7 : 1 }}>
+            {isPending ? 'Posting...' : 'Post Gig'}
+          </button>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+export default function MarketplacePage() {
+  const user = useAuthStore((s) => s.user)
+  const { data: categories } = useCategories()
+  const [search, setSearch] = useState('')
+  const [activeCategory, setActiveCategory] = useState('')
+  const [showCreate, setShowCreate] = useState(false)
+  const [searchInput, setSearchInput] = useState('')
+
+  const { data: gigs, isLoading } = useGigs({
+    search: search || undefined,
+    category: activeCategory || undefined,
+  })
+
+  const handleSearch = (e) => {
+    if (e.key === 'Enter') setSearch(searchInput)
+  }
+
+  return (
+    <div>
+      {showCreate && <CreateGigModal onClose={() => setShowCreate(false)} />}
+
+      {/* Header */}
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '20px', gap: '12px', flexWrap: 'wrap' }}>
+        <input
+          value={searchInput}
+          onChange={(e) => setSearchInput(e.target.value)}
+          onKeyDown={handleSearch}
+          placeholder='Search gigs... (Enter to search)'
+          style={{ flex: 1, minWidth: '200px', padding: '9px 14px', background: 'var(--bg-secondary)', border: '1px solid var(--border)', borderRadius: 'var(--radius-md)', color: 'var(--text-primary)', fontSize: '14px', outline: 'none' }}
+        />
+        {user?.is_developer && (
+          <button onClick={() => setShowCreate(true)} style={{ padding: '9px 18px', background: 'var(--accent)', border: 'none', borderRadius: 'var(--radius-md)', color: '#0a0a0a', fontWeight: 700, fontSize: '13px', cursor: 'pointer', whiteSpace: 'nowrap' }}>
+            + Post Gig
+          </button>
+        )}
+      </div>
+
+      {/* Category tabs */}
+      {categories && categories.length > 0 && (
+        <div style={{ display: 'flex', gap: '6px', marginBottom: '20px', flexWrap: 'wrap' }}>
+          <button onClick={() => setActiveCategory('')} style={{ padding: '5px 12px', borderRadius: 'var(--radius-sm)', border: '1px solid', borderColor: activeCategory === '' ? 'var(--accent)' : 'var(--border)', background: activeCategory === '' ? 'var(--accent-dim)' : 'transparent', color: activeCategory === '' ? 'var(--accent)' : 'var(--text-secondary)', fontSize: '12px', cursor: 'pointer' }}>All</button>
+          {categories.map((c) => (
+            <button key={c.id} onClick={() => setActiveCategory(c.slug)} style={{ padding: '5px 12px', borderRadius: 'var(--radius-sm)', border: '1px solid', borderColor: activeCategory === c.slug ? 'var(--accent)' : 'var(--border)', background: activeCategory === c.slug ? 'var(--accent-dim)' : 'transparent', color: activeCategory === c.slug ? 'var(--accent)' : 'var(--text-secondary)', fontSize: '12px', cursor: 'pointer' }}>
+              {c.name}
+            </button>
+          ))}
+        </div>
+      )}
+
+      {/* Gig Grid */}
+      {isLoading ? (
+        <div style={{ color: 'var(--text-muted)', fontSize: '14px' }}>Loading gigs...</div>
+      ) : gigs && gigs.length > 0 ? (
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(260px, 1fr))', gap: '14px' }}>
+          {gigs.map((gig) => <GigCard key={gig.id} gig={gig} />)}
+        </div>
+      ) : (
+        <div style={{ textAlign: 'center', padding: '60px 20px', color: 'var(--text-muted)' }}>
+          <div style={{ fontSize: '32px', marginBottom: '12px' }}>🛍️</div>
+          <div style={{ fontSize: '15px', fontWeight: 600, color: 'var(--text-secondary)', marginBottom: '6px' }}>No gigs yet</div>
+          <div style={{ fontSize: '13px' }}>{user?.is_developer ? 'Be the first to post a gig.' : 'Check back soon.'}</div>
+        </div>
+      )}
+    </div>
+  )
+}
