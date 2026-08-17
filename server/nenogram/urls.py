@@ -9,6 +9,8 @@ urlpatterns = [
     path('api/wallet/', include('wallet.urls')),
     path('api/marketplace/', include('marketplace.urls')),
     path('api/nano/', include('nano.urls')),
+    path('api/hackathon/', include('hackathon.urls')),
+    path('api/workspace/', include('workspace.urls')),
     path('api/social/', include('social.urls')),
 ]
 

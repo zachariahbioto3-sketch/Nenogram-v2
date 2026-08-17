@@ -11,6 +11,8 @@ import ProfilePage from './pages/profile/ProfilePage'
 import SettingsPage from './pages/settings/SettingsPage'
 import NanoPage from './pages/nano/NanoPage'
 import HubPage from './pages/hub/HubPage'
+import HackathonPage from './pages/hackathon/HackathonPage'
+import WorkspacePage from './pages/workspace/WorkspacePage'
 
 const ProtectedRoute = ({ children }) => {
   const isAuthenticated = useAuthStore((s) => s.isAuthenticated)
@@ -30,7 +32,8 @@ export default function App() {
           <Route path='/marketplace' element={<MarketplacePage />} />
           <Route path='/wallet' element={<WalletPage />} />
           <Route path='/nano' element={<NanoPage />} />
-          <Route path='/workspace' element={<div style={{ color: 'var(--text-secondary)' }}>Workspace coming soon</div>} />
+          <Route path='/hackathon' element={<HackathonPage />} />
+          <Route path='/workspace' element={<WorkspacePage />} />
           <Route path='/profile/:username' element={<ProfilePage />} />
           <Route path='/profile' element={<ProfilePage />} />
           <Route path='/settings' element={<SettingsPage />} />
