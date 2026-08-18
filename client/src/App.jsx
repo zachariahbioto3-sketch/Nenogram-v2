@@ -12,6 +12,7 @@ import SettingsPage from './pages/settings/SettingsPage'
 import NanoPage from './pages/nano/NanoPage'
 import HubPage from './pages/hub/HubPage'
 import HackathonPage from './pages/hackathon/HackathonPage'
+import JobDetailPage from './pages/marketplace/JobDetailPage'
 import WorkspacePage from './pages/workspace/WorkspacePage'
 
 const ProtectedRoute = ({ children }) => {
@@ -30,6 +31,7 @@ export default function App() {
           <Route path='/' element={<DashboardPage />} />
           <Route path='/hub' element={<HubPage />} />
           <Route path='/marketplace' element={<MarketplacePage />} />
+          <Route path='/marketplace/jobs/:id' element={<JobDetailPage />} />
           <Route path='/wallet' element={<WalletPage />} />
           <Route path='/nano' element={<NanoPage />} />
           <Route path='/hackathon' element={<HackathonPage />} />
