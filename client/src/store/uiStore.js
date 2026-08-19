@@ -1,30 +1,26 @@
-import { create } from 'zustand'
-
-const isMobile = () => window.innerWidth < 768
+import { create } from "zustand"
 
 export const useUIStore = create((set) => ({
   notifications: [],
 
-  addNotification: (message, type = 'info') => set((state) => ({
-    notifications: [
-      ...state.notifications,
-      { id: Date.now(), message, type },
-    ]
+  addNotification: (message, type = "info") => set((state) => ({
+    notifications: [...state.notifications, { id: Date.now(), message, type }],
   })),
 
   removeNotification: (id) => set((state) => ({
-    notifications: state.notifications.filter((n) => n.id !== id)
+    notifications: state.notifications.filter((n) => n.id !== id),
   })),
 
   clearNotifications: () => set({ notifications: [] }),
 
-  sidebarOpen: !isMobile(),
+  sidebarOpen: true,
   toggleSidebar: () => set((state) => ({ sidebarOpen: !state.sidebarOpen })),
   closeSidebar: () => set({ sidebarOpen: false }),
+  openSidebar: () => set({ sidebarOpen: true }),
 
-  activeAccent: '#adc6ff',
+  activeAccent: "#adc6ff",
   setAccent: (color) => {
-    document.documentElement.style.setProperty('--accent', color)
+    document.documentElement.style.setProperty("--accent", color)
     set({ activeAccent: color })
   },
 }))

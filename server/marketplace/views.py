@@ -1,15 +1,20 @@
-from rest_framework import generics, status
-from rest_framework.decorators import api_view, permission_classes
-from rest_framework.permissions import IsAuthenticated
-from rest_framework.response import Response
+import uuid
+from django.db import transaction
+from django.db.models import Q, Count
 from django.shortcuts import get_object_or_404
 from django.utils import timezone
+from rest_framework import generics, status
+from rest_framework.decorators import api_view, permission_classes
+from rest_framework.permissions import IsAuthenticated, AllowAny
+from rest_framework.response import Response
+from rest_framework.views import APIView
 from .models import Category, Gig, GigOrder, Job, Bid, Contract, Milestone, MilestoneSubmission, Dispute
 from .serializers import (
     CategorySerializer, GigSerializer, GigOrderSerializer,
     JobSerializer, BidSerializer, ContractSerializer,
     MilestoneSerializer, MilestoneSubmissionSerializer, DisputeSerializer
 )
+from wallet.models import Wallet, Escrow, Transaction
 
 
 # ─── CATEGORIES ──────────────────────────────────────────────────────────────
@@ -29,8 +34,11 @@ class GigListCreateView(generics.ListCreateAPIView):
     def get_queryset(self):
         qs = Gig.objects.filter(is_active=True).select_related("developer", "category")
         category = self.request.query_params.get("category")
+        search = self.request.query_params.get("q")
         if category:
             qs = qs.filter(category__slug=category)
+        if search:
+            qs = qs.filter(Q(title__icontains=search) | Q(description__icontains=search))
         return qs
 
 
@@ -83,8 +91,18 @@ class JobListCreateView(generics.ListCreateAPIView):
     def get_queryset(self):
         qs = Job.objects.filter(status="open").select_related("client")
         category = self.request.query_params.get("category")
+        search = self.request.query_params.get("q")
+        budget = self.request.query_params.get("budget")
         if category:
             qs = qs.filter(category=category)
+        if search:
+            qs = qs.filter(Q(title__icontains=search) | Q(description__icontains=search))
+        if budget == "low":
+            qs = qs.filter(budget_max__lte=20000)
+        elif budget == "mid":
+            qs = qs.filter(budget_min__gte=20000, budget_max__lte=100000)
+        elif budget == "high":
+            qs = qs.filter(budget_min__gte=100000)
         return qs
 
 
@@ -124,18 +142,59 @@ def place_bid(request, job_id):
 
 @api_view(["POST"])
 @permission_classes([IsAuthenticated])
+@transaction.atomic
 def accept_bid(request, bid_id):
     bid = get_object_or_404(Bid, id=bid_id)
     job = bid.job
+
     if job.client != request.user:
         return Response({"detail": "Not authorized"}, status=status.HTTP_403_FORBIDDEN)
     if job.status != "open":
         return Response({"detail": "Job is no longer open"}, status=status.HTTP_400_BAD_REQUEST)
+
+    # Check wallet balance
+    try:
+        client_wallet = Wallet.objects.get(user=request.user)
+    except Wallet.DoesNotExist:
+        return Response({"detail": "Wallet not found"}, status=status.HTTP_400_BAD_REQUEST)
+
+    if client_wallet.real_balance < bid.amount:
+        return Response({"detail": "Insufficient wallet balance to fund escrow"}, status=status.HTTP_400_BAD_REQUEST)
+
+    # Deduct from wallet
+    client_wallet.real_balance -= bid.amount
+    client_wallet.save(update_fields=["real_balance"])
+
+    # Record transaction
+    Transaction.objects.create(
+        wallet=client_wallet,
+        transaction_type="escrow_hold",
+        currency_type="real",
+        amount=bid.amount,
+        status="completed",
+        reference=str(uuid.uuid4()).replace("-", "")[:20].upper(),
+        description="Escrow hold for job: " + job.title,
+    )
+
+    # Create escrow
+    escrow_ref = str(uuid.uuid4()).replace("-", "")[:20].upper()
+    escrow = Escrow.objects.create(
+        payer=request.user,
+        payee=bid.developer,
+        amount=bid.amount,
+        currency_type="real",
+        status="holding",
+        reference=escrow_ref,
+    )
+
+    # Accept bid, reject others
     bid.status = "accepted"
-    bid.save()
+    bid.save(update_fields=["status"])
     job.bids.exclude(id=bid.id).update(status="rejected")
     job.status = "in_progress"
-    job.save()
+    job.save(update_fields=["status"])
+
+    # Create contract + milestones
     contract = Contract.objects.create(
         client=request.user,
         developer=bid.developer,
@@ -145,15 +204,41 @@ def accept_bid(request, bid_id):
         total_amount=bid.amount,
         currency_type=bid.currency_type,
     )
-    for i, m in enumerate(bid.proposed_milestones):
+
+    for i, m in enumerate(bid.proposed_milestones or []):
         Milestone.objects.create(
             contract=contract,
             title=m.get("title", "Milestone " + str(i + 1)),
             amount=m.get("amount", 0),
             currency_type=bid.currency_type,
             order=i + 1,
+            escrow=escrow if i == 0 else None,
         )
+
+    if not bid.proposed_milestones:
+        Milestone.objects.create(
+            contract=contract,
+            title="Project Delivery",
+            amount=bid.amount,
+            currency_type=bid.currency_type,
+            order=1,
+            escrow=escrow,
+        )
+
     return Response(ContractSerializer(contract).data, status=status.HTTP_201_CREATED)
+
+
+@api_view(["POST"])
+@permission_classes([IsAuthenticated])
+def reject_bid(request, bid_id):
+    bid = get_object_or_404(Bid, id=bid_id)
+    if bid.job.client != request.user:
+        return Response({"detail": "Not authorized"}, status=status.HTTP_403_FORBIDDEN)
+    if bid.status != "pending":
+        return Response({"detail": "Bid cannot be rejected"}, status=status.HTTP_400_BAD_REQUEST)
+    bid.status = "rejected"
+    bid.save(update_fields=["status"])
+    return Response({"detail": "Bid rejected"})
 
 
 # ─── CONTRACTS ───────────────────────────────────────────────────────────────
@@ -165,8 +250,7 @@ class MyContractsView(generics.ListAPIView):
     def get_queryset(self):
         user = self.request.user
         return Contract.objects.filter(
-            __import__("django.db.models", fromlist=["Q"]).Q(client=user) |
-            __import__("django.db.models", fromlist=["Q"]).Q(developer=user)
+            Q(client=user) | Q(developer=user)
         ).select_related("client", "developer").prefetch_related("milestones")
 
 
@@ -176,7 +260,6 @@ class ContractDetailView(generics.RetrieveAPIView):
 
     def get_queryset(self):
         user = self.request.user
-        from django.db.models import Q
         return Contract.objects.filter(
             Q(client=user) | Q(developer=user)
         ).prefetch_related("milestones")
@@ -199,22 +282,44 @@ def submit_milestone(request, milestone_id):
     )
     milestone.status = "submitted"
     milestone.submitted_at = timezone.now()
-    milestone.save()
+    milestone.save(update_fields=["status", "submitted_at"])
     return Response({"detail": "Milestone submitted"})
 
 
 @api_view(["POST"])
 @permission_classes([IsAuthenticated])
+@transaction.atomic
 def approve_milestone(request, milestone_id):
     milestone = get_object_or_404(Milestone, id=milestone_id)
     if milestone.contract.client != request.user:
         return Response({"detail": "Not authorized"}, status=status.HTTP_403_FORBIDDEN)
     if milestone.status != "submitted":
         return Response({"detail": "Milestone not submitted yet"}, status=status.HTTP_400_BAD_REQUEST)
+
     milestone.status = "approved"
     milestone.approved_at = timezone.now()
-    milestone.save()
-    return Response({"detail": "Milestone approved — payment released"})
+    milestone.save(update_fields=["status", "approved_at"])
+
+    # Release escrow to developer wallet
+    if milestone.escrow and milestone.escrow.status == "holding":
+        escrow = milestone.escrow
+        dev_wallet, _ = Wallet.objects.get_or_create(user=milestone.contract.developer)
+        dev_wallet.real_balance += escrow.amount
+        dev_wallet.save(update_fields=["real_balance"])
+        escrow.status = "released"
+        escrow.released_at = timezone.now()
+        escrow.save(update_fields=["status", "released_at"])
+        Transaction.objects.create(
+            wallet=dev_wallet,
+            transaction_type="escrow_release",
+            currency_type="real",
+            amount=escrow.amount,
+            status="completed",
+            reference=str(uuid.uuid4()).replace("-", "")[:20].upper(),
+            description="Escrow release for milestone: " + milestone.title,
+        )
+
+    return Response({"detail": "Milestone approved and payment released"})
 
 
 # ─── DISPUTES ────────────────────────────────────────────────────────────────
@@ -222,15 +327,3 @@ def approve_milestone(request, milestone_id):
 class DisputeCreateView(generics.CreateAPIView):
     serializer_class = DisputeSerializer
     permission_classes = [IsAuthenticated]
-
-@api_view(["POST"])
-@permission_classes([IsAuthenticated])
-def reject_bid(request, bid_id):
-    bid = get_object_or_404(Bid, id=bid_id)
-    if bid.job.client != request.user:
-        return Response({"detail": "Not authorized"}, status=status.HTTP_403_FORBIDDEN)
-    if bid.status != "pending":
-        return Response({"detail": "Bid cannot be rejected"}, status=status.HTTP_400_BAD_REQUEST)
-    bid.status = "rejected"
-    bid.save()
-    return Response({"detail": "Bid rejected"})
