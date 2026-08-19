@@ -1,131 +1,155 @@
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { marketplaceAPI } from '../api/marketplace'
-import { useUIStore } from '../store/uiStore'
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query"
+import { useUIStore } from "../store/uiStore"
+import { marketplaceAPI } from "../api/marketplace"
 
-export function useGigs(filters) {
+export function useGigs(params) {
   return useQuery({
-    queryKey: ['gigs', filters],
-    queryFn: () => marketplaceAPI.getGigs(filters),
+    queryKey: ["gigs", params],
+    queryFn: () => marketplaceAPI.getGigs(params).then((r) => r.data),
   })
 }
 
 export function useGig(id) {
   return useQuery({
-    queryKey: ['gig', id],
-    queryFn: () => marketplaceAPI.getGig(id),
+    queryKey: ["gig", id],
+    queryFn: () => marketplaceAPI.getGig(id).then((r) => r.data),
     enabled: !!id,
   })
 }
 
-export function useCategories() {
+export function useJobs(params) {
   return useQuery({
-    queryKey: ['categories'],
-    queryFn: marketplaceAPI.getCategories,
-  })
-}
-
-export function useCreateGig() {
-  const queryClient = useQueryClient()
-  const addNotification = useUIStore((s) => s.addNotification)
-  return useMutation({
-    mutationFn: marketplaceAPI.createGig,
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['gigs'] })
-      addNotification('Gig created successfully', 'success')
-    },
-    onError: (err) => {
-      const errors = err?.response?.data
-      const msg = errors ? Object.values(errors).flat()[0] : 'Failed to create gig'
-      addNotification(msg, 'error')
-    },
-  })
-}
-
-export function useJobs(filters) {
-  return useQuery({
-    queryKey: ['jobs', filters],
-    queryFn: () => marketplaceAPI.getJobs(filters),
+    queryKey: ["jobs", params],
+    queryFn: () => marketplaceAPI.getJobs(params).then((r) => r.data),
   })
 }
 
 export function useJob(id) {
   return useQuery({
-    queryKey: ['job', id],
-    queryFn: () => marketplaceAPI.getJob(id),
+    queryKey: ["job", id],
+    queryFn: () => marketplaceAPI.getJob(id).then((r) => r.data),
     enabled: !!id,
   })
 }
 
+export function useContracts() {
+  return useQuery({
+    queryKey: ["contracts"],
+    queryFn: () => marketplaceAPI.getContracts().then((r) => r.data),
+  })
+}
+
+export function useContract(id) {
+  return useQuery({
+    queryKey: ["contract", id],
+    queryFn: () => marketplaceAPI.getContract(id).then((r) => r.data),
+    enabled: !!id,
+  })
+}
+
+export function useCreateGig() {
+  const qc = useQueryClient()
+  const addNotification = useUIStore((s) => s.addNotification)
+  return useMutation({
+    mutationFn: marketplaceAPI.createGig,
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["gigs"] })
+      addNotification("Gig created", "success")
+    },
+    onError: () => addNotification("Failed to create gig", "error"),
+  })
+}
+
 export function useCreateJob() {
-  const queryClient = useQueryClient()
+  const qc = useQueryClient()
   const addNotification = useUIStore((s) => s.addNotification)
   return useMutation({
     mutationFn: marketplaceAPI.createJob,
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['jobs'] })
-      addNotification('Job posted successfully', 'success')
+      qc.invalidateQueries({ queryKey: ["jobs"] })
+      addNotification("Job posted", "success")
     },
-    onError: (err) => {
-      const errors = err?.response?.data
-      const msg = errors ? Object.values(errors).flat()[0] : 'Failed to post job'
-      addNotification(msg, 'error')
-    },
-  })
-}
-
-export function useJobBids(jobId) {
-  return useQuery({
-    queryKey: ['jobBids', jobId],
-    queryFn: () => marketplaceAPI.getJobBids(jobId),
-    enabled: !!jobId,
+    onError: () => addNotification("Failed to post job", "error"),
   })
 }
 
 export function usePlaceBid(jobId) {
-  const queryClient = useQueryClient()
+  const qc = useQueryClient()
   const addNotification = useUIStore((s) => s.addNotification)
   return useMutation({
     mutationFn: (data) => marketplaceAPI.placeBid(jobId, data),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['jobBids', jobId] })
-      queryClient.invalidateQueries({ queryKey: ['job', jobId] })
-      addNotification('Bid placed successfully', 'success')
+      qc.invalidateQueries({ queryKey: ["job", jobId] })
+      addNotification("Bid placed", "success")
     },
     onError: (err) => {
-      const detail = err?.response?.data?.detail
-      const msg = detail || 'Failed to place bid'
-      addNotification(msg, 'error')
+      const msg = err.response?.data?.detail || "Failed to place bid"
+      addNotification(msg, "error")
     },
   })
 }
 
-export function useAcceptBid(jobId) {
-  const queryClient = useQueryClient()
+export function useAcceptBid() {
+  const qc = useQueryClient()
   const addNotification = useUIStore((s) => s.addNotification)
   return useMutation({
     mutationFn: marketplaceAPI.acceptBid,
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['jobBids', jobId] })
-      queryClient.invalidateQueries({ queryKey: ['job', jobId] })
-      queryClient.invalidateQueries({ queryKey: ['jobs'] })
-      addNotification('Bid accepted. Escrow funded.', 'success')
+      qc.invalidateQueries({ queryKey: ["contracts"] })
+      qc.invalidateQueries({ queryKey: ["jobs"] })
+      addNotification("Bid accepted — contract created", "success")
     },
     onError: (err) => {
-      const detail = err?.response?.data?.detail
-      addNotification(detail || 'Failed to accept bid', 'error')
+      const msg = err.response?.data?.detail || "Failed to accept bid"
+      addNotification(msg, "error")
     },
   })
 }
 
-export function useRejectBid(jobId) {
-  const queryClient = useQueryClient()
+export function useSubmitMilestone(milestoneId) {
+  const qc = useQueryClient()
   const addNotification = useUIStore((s) => s.addNotification)
   return useMutation({
-    mutationFn: marketplaceAPI.rejectBid,
+    mutationFn: (data) => marketplaceAPI.submitMilestone(milestoneId, data),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['jobBids', jobId] })
-      addNotification('Bid rejected', 'info')
+      qc.invalidateQueries({ queryKey: ["contracts"] })
+      addNotification("Milestone submitted", "success")
     },
-    onError: () => addNotification('Failed to reject bid', 'error'),
+    onError: () => addNotification("Failed to submit milestone", "error"),
+  })
+}
+
+export function useApproveMilestone(milestoneId) {
+  const qc = useQueryClient()
+  const addNotification = useUIStore((s) => s.addNotification)
+  return useMutation({
+    mutationFn: () => marketplaceAPI.approveMilestone(milestoneId),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["contracts"] })
+      addNotification("Milestone approved — payment released", "success")
+    },
+    onError: () => addNotification("Failed to approve milestone", "error"),
+  })
+}
+
+
+export function useJobBids(jobId) {
+  return useQuery({
+    queryKey: ["job-bids", jobId],
+    queryFn: () => marketplaceAPI.getJobBids(jobId).then((r) => r.data),
+    enabled: !!jobId,
+  })
+}
+
+export function useRejectBid(jobId) {
+  const qc = useQueryClient()
+  const addNotification = useUIStore((s) => s.addNotification)
+  return useMutation({
+    mutationFn: (bidId) => marketplaceAPI.rejectBid(bidId),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["job-bids", jobId] })
+      addNotification("Bid rejected", "info")
+    },
+    onError: () => addNotification("Failed to reject bid", "error"),
   })
 }

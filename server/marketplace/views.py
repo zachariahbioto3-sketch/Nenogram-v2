@@ -1,170 +1,236 @@
-from django.db import transaction
-from django.db.models import Count, Q
-from django.shortcuts import get_object_or_404
+from rest_framework import generics, status
 from rest_framework.decorators import api_view, permission_classes
-from rest_framework.permissions import IsAuthenticated, AllowAny
+from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
-from rest_framework import status, generics, permissions
-from rest_framework.views import APIView
-from rest_framework.exceptions import PermissionDenied
-from .models import Gig, GigCategory, Job, Bid
-from .serializers import GigSerializer, CreateGigSerializer, GigCategorySerializer, JobSerializer, BidSerializer
-from wallet.models import Wallet, Escrow
-import uuid
+from django.shortcuts import get_object_or_404
+from django.utils import timezone
+from .models import Category, Gig, GigOrder, Job, Bid, Contract, Milestone, MilestoneSubmission, Dispute
+from .serializers import (
+    CategorySerializer, GigSerializer, GigOrderSerializer,
+    JobSerializer, BidSerializer, ContractSerializer,
+    MilestoneSerializer, MilestoneSubmissionSerializer, DisputeSerializer
+)
 
 
-@api_view(['GET'])
-@permission_classes([AllowAny])
-def gig_list(request):
-    gigs = Gig.objects.filter(is_active=True).select_related('developer', 'developer__developer_profile', 'category')
-    search = request.query_params.get('search')
-    category = request.query_params.get('category')
-    if search:
-        gigs = gigs.filter(title__icontains=search)
-    if category:
-        gigs = gigs.filter(category__slug=category)
-    serializer = GigSerializer(gigs, many=True)
-    return Response(serializer.data)
+# ─── CATEGORIES ──────────────────────────────────────────────────────────────
+
+class CategoryListView(generics.ListAPIView):
+    queryset = Category.objects.all()
+    serializer_class = CategorySerializer
+    permission_classes = [IsAuthenticated]
 
 
-@api_view(['GET'])
-@permission_classes([AllowAny])
-def gig_detail(request, pk):
-    try:
-        gig = Gig.objects.select_related('developer', 'developer__developer_profile', 'category').get(pk=pk, is_active=True)
-    except Gig.DoesNotExist:
-        return Response({'detail': 'Not found'}, status=status.HTTP_404_NOT_FOUND)
-    return Response(GigSerializer(gig).data)
+# ─── GIGS ────────────────────────────────────────────────────────────────────
+
+class GigListCreateView(generics.ListCreateAPIView):
+    serializer_class = GigSerializer
+    permission_classes = [IsAuthenticated]
+
+    def get_queryset(self):
+        qs = Gig.objects.filter(is_active=True).select_related("developer", "category")
+        category = self.request.query_params.get("category")
+        if category:
+            qs = qs.filter(category__slug=category)
+        return qs
 
 
-@api_view(['POST'])
+class GigDetailView(generics.RetrieveUpdateDestroyAPIView):
+    serializer_class = GigSerializer
+    permission_classes = [IsAuthenticated]
+
+    def get_queryset(self):
+        return Gig.objects.select_related("developer", "category")
+
+
+@api_view(["POST"])
 @permission_classes([IsAuthenticated])
-def gig_create(request):
-    if not request.user.is_developer:
-        return Response({'detail': 'Developer profile required'}, status=status.HTTP_403_FORBIDDEN)
-    serializer = CreateGigSerializer(data=request.data, context={'request': request})
-    if serializer.is_valid():
-        gig = serializer.save()
-        return Response(GigSerializer(gig).data, status=status.HTTP_201_CREATED)
-    return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+def order_gig(request, gig_id):
+    gig = get_object_or_404(Gig, id=gig_id, is_active=True)
+    if gig.developer == request.user:
+        return Response({"detail": "Cannot order your own gig"}, status=status.HTTP_400_BAD_REQUEST)
+    order = GigOrder.objects.create(
+        gig=gig,
+        client=request.user,
+        requirements=request.data.get("requirements", ""),
+        amount=gig.price,
+        currency_type=gig.currency_type,
+    )
+    contract = Contract.objects.create(
+        client=request.user,
+        developer=gig.developer,
+        source="gig",
+        gig_order=order,
+        title=gig.title,
+        total_amount=gig.price,
+        currency_type=gig.currency_type,
+    )
+    Milestone.objects.create(
+        contract=contract,
+        title="Delivery",
+        amount=gig.price,
+        currency_type=gig.currency_type,
+        order=1,
+    )
+    return Response(GigOrderSerializer(order).data, status=status.HTTP_201_CREATED)
 
 
-@api_view(['GET'])
-@permission_classes([AllowAny])
-def category_list(request):
-    categories = GigCategory.objects.all()
-    return Response(GigCategorySerializer(categories, many=True).data)
-
+# ─── JOBS ────────────────────────────────────────────────────────────────────
 
 class JobListCreateView(generics.ListCreateAPIView):
     serializer_class = JobSerializer
-    permission_classes = [permissions.IsAuthenticatedOrReadOnly]
+    permission_classes = [IsAuthenticated]
 
     def get_queryset(self):
-        qs = Job.objects.filter(status=Job.STATUS_OPEN).annotate(bid_count=Count('bids'))
-        category = self.request.query_params.get('category')
-        search = self.request.query_params.get('q')
-        budget = self.request.query_params.get('budget')
+        qs = Job.objects.filter(status="open").select_related("client")
+        category = self.request.query_params.get("category")
         if category:
             qs = qs.filter(category=category)
-        if search:
-            qs = qs.filter(Q(title__icontains=search) | Q(description__icontains=search))
-        if budget == 'low':
-            qs = qs.filter(budget_max__lte=20000)
-        elif budget == 'mid':
-            qs = qs.filter(budget_min__gte=20000, budget_max__lte=100000)
-        elif budget == 'high':
-            qs = qs.filter(budget_min__gte=100000)
-        return qs.order_by('-created_at')
-
-    def perform_create(self, serializer):
-        serializer.save(client=self.request.user)
+        return qs
 
 
-class JobDetailView(generics.RetrieveAPIView):
-    queryset = Job.objects.annotate(bid_count=Count('bids'))
+class JobDetailView(generics.RetrieveUpdateDestroyAPIView):
     serializer_class = JobSerializer
-    permission_classes = [permissions.AllowAny]
+    permission_classes = [IsAuthenticated]
+    queryset = Job.objects.select_related("client")
 
 
-class JobBidListCreateView(generics.ListCreateAPIView):
+# ─── BIDS ────────────────────────────────────────────────────────────────────
+
+class JobBidListView(generics.ListAPIView):
     serializer_class = BidSerializer
-    permission_classes = [permissions.IsAuthenticated]
-
-    def get_job(self):
-        return get_object_or_404(Job, pk=self.kwargs['pk'])
+    permission_classes = [IsAuthenticated]
 
     def get_queryset(self):
-        job = self.get_job()
-        if self.request.user == job.client:
-            return job.bids.select_related('developer').order_by('-created_at')
-        return job.bids.filter(developer=self.request.user).order_by('-created_at')
-
-    def perform_create(self, serializer):
-        job = self.get_job()
-        if not getattr(self.request.user, 'is_developer', False):
-            raise PermissionDenied('Only developers can place bids.')
-        if job.status != Job.STATUS_OPEN:
-            raise PermissionDenied('This job is no longer open for bids.')
-        if Bid.objects.filter(job=job, developer=self.request.user).exists():
-            raise PermissionDenied('You have already placed a bid on this job.')
-        serializer.save(job=job, developer=self.request.user)
+        job = get_object_or_404(Job, id=self.kwargs["job_id"])
+        if self.request.user != job.client:
+            return Bid.objects.none()
+        return Bid.objects.filter(job=job).select_related("developer")
 
 
-class AcceptBidView(APIView):
-    permission_classes = [permissions.IsAuthenticated]
+@api_view(["POST"])
+@permission_classes([IsAuthenticated])
+def place_bid(request, job_id):
+    job = get_object_or_404(Job, id=job_id, status="open")
+    if job.client == request.user:
+        return Response({"detail": "Cannot bid on your own job"}, status=status.HTTP_400_BAD_REQUEST)
+    if Bid.objects.filter(job=job, developer=request.user).exists():
+        return Response({"detail": "Already placed a bid"}, status=status.HTTP_400_BAD_REQUEST)
+    serializer = BidSerializer(data=request.data, context={"request": request})
+    if serializer.is_valid():
+        serializer.save(job=job)
+        return Response(serializer.data, status=status.HTTP_201_CREATED)
+    return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
-    @transaction.atomic
-    def post(self, request, pk):
-        bid = get_object_or_404(Bid.objects.select_related('job'), pk=pk)
-        job = bid.job
 
-        if request.user != job.client:
-            return Response({'detail': 'Not your job posting.'}, status=status.HTTP_403_FORBIDDEN)
-        if job.status != Job.STATUS_OPEN:
-            return Response({'detail': 'Job is not open.'}, status=status.HTTP_400_BAD_REQUEST)
-
-        try:
-            client_wallet = Wallet.objects.get(user=request.user)
-        except Wallet.DoesNotExist:
-            return Response({'detail': 'Wallet not found.'}, status=status.HTTP_400_BAD_REQUEST)
-
-        if client_wallet.real_balance < bid.amount:
-            return Response({'detail': 'Insufficient wallet balance to fund escrow.'}, status=status.HTTP_400_BAD_REQUEST)
-
-        bid.status = 'accepted'
-        bid.save(update_fields=['status'])
-
-        job.status = Job.STATUS_IN_PROGRESS
-        job.save(update_fields=['status'])
-
-        Bid.objects.filter(job=job).exclude(pk=bid.pk).update(status='rejected')
-
-        client_wallet.real_balance -= bid.amount
-        client_wallet.save(update_fields=['real_balance'])
-
-        escrow = Escrow.objects.create(
-            payer=request.user,
-            payee=bid.developer,
-            amount=bid.amount,
-            currency_type='real',
-            status='holding',
-            reference=str(uuid.uuid4()),
+@api_view(["POST"])
+@permission_classes([IsAuthenticated])
+def accept_bid(request, bid_id):
+    bid = get_object_or_404(Bid, id=bid_id)
+    job = bid.job
+    if job.client != request.user:
+        return Response({"detail": "Not authorized"}, status=status.HTTP_403_FORBIDDEN)
+    if job.status != "open":
+        return Response({"detail": "Job is no longer open"}, status=status.HTTP_400_BAD_REQUEST)
+    bid.status = "accepted"
+    bid.save()
+    job.bids.exclude(id=bid.id).update(status="rejected")
+    job.status = "in_progress"
+    job.save()
+    contract = Contract.objects.create(
+        client=request.user,
+        developer=bid.developer,
+        source="job",
+        job=job,
+        title=job.title,
+        total_amount=bid.amount,
+        currency_type=bid.currency_type,
+    )
+    for i, m in enumerate(bid.proposed_milestones):
+        Milestone.objects.create(
+            contract=contract,
+            title=m.get("title", "Milestone " + str(i + 1)),
+            amount=m.get("amount", 0),
+            currency_type=bid.currency_type,
+            order=i + 1,
         )
-
-        return Response({
-            'detail': 'Bid accepted, escrow funded.',
-            'escrow_id': str(escrow.id),
-        }, status=status.HTTP_200_OK)
+    return Response(ContractSerializer(contract).data, status=status.HTTP_201_CREATED)
 
 
-class RejectBidView(APIView):
-    permission_classes = [permissions.IsAuthenticated]
+# ─── CONTRACTS ───────────────────────────────────────────────────────────────
 
-    def post(self, request, pk):
-        bid = get_object_or_404(Bid.objects.select_related('job'), pk=pk)
-        if request.user != bid.job.client:
-            return Response({'detail': 'Not your job posting.'}, status=status.HTTP_403_FORBIDDEN)
-        bid.status = 'rejected'
-        bid.save(update_fields=['status'])
-        return Response({'detail': 'Bid rejected.'}, status=status.HTTP_200_OK)
+class MyContractsView(generics.ListAPIView):
+    serializer_class = ContractSerializer
+    permission_classes = [IsAuthenticated]
+
+    def get_queryset(self):
+        user = self.request.user
+        return Contract.objects.filter(
+            __import__("django.db.models", fromlist=["Q"]).Q(client=user) |
+            __import__("django.db.models", fromlist=["Q"]).Q(developer=user)
+        ).select_related("client", "developer").prefetch_related("milestones")
+
+
+class ContractDetailView(generics.RetrieveAPIView):
+    serializer_class = ContractSerializer
+    permission_classes = [IsAuthenticated]
+
+    def get_queryset(self):
+        user = self.request.user
+        from django.db.models import Q
+        return Contract.objects.filter(
+            Q(client=user) | Q(developer=user)
+        ).prefetch_related("milestones")
+
+
+# ─── MILESTONES ──────────────────────────────────────────────────────────────
+
+@api_view(["POST"])
+@permission_classes([IsAuthenticated])
+def submit_milestone(request, milestone_id):
+    milestone = get_object_or_404(Milestone, id=milestone_id)
+    if milestone.contract.developer != request.user:
+        return Response({"detail": "Not authorized"}, status=status.HTTP_403_FORBIDDEN)
+    if milestone.status not in ["pending", "in_progress"]:
+        return Response({"detail": "Milestone cannot be submitted"}, status=status.HTTP_400_BAD_REQUEST)
+    MilestoneSubmission.objects.create(
+        milestone=milestone,
+        note=request.data.get("note", ""),
+        attachments=request.data.get("attachments", []),
+    )
+    milestone.status = "submitted"
+    milestone.submitted_at = timezone.now()
+    milestone.save()
+    return Response({"detail": "Milestone submitted"})
+
+
+@api_view(["POST"])
+@permission_classes([IsAuthenticated])
+def approve_milestone(request, milestone_id):
+    milestone = get_object_or_404(Milestone, id=milestone_id)
+    if milestone.contract.client != request.user:
+        return Response({"detail": "Not authorized"}, status=status.HTTP_403_FORBIDDEN)
+    if milestone.status != "submitted":
+        return Response({"detail": "Milestone not submitted yet"}, status=status.HTTP_400_BAD_REQUEST)
+    milestone.status = "approved"
+    milestone.approved_at = timezone.now()
+    milestone.save()
+    return Response({"detail": "Milestone approved — payment released"})
+
+
+# ─── DISPUTES ────────────────────────────────────────────────────────────────
+
+class DisputeCreateView(generics.CreateAPIView):
+    serializer_class = DisputeSerializer
+    permission_classes = [IsAuthenticated]
+
+@api_view(["POST"])
+@permission_classes([IsAuthenticated])
+def reject_bid(request, bid_id):
+    bid = get_object_or_404(Bid, id=bid_id)
+    if bid.job.client != request.user:
+        return Response({"detail": "Not authorized"}, status=status.HTTP_403_FORBIDDEN)
+    if bid.status != "pending":
+        return Response({"detail": "Bid cannot be rejected"}, status=status.HTTP_400_BAD_REQUEST)
+    bid.status = "rejected"
+    bid.save()
+    return Response({"detail": "Bid rejected"})
