@@ -1,26 +1,32 @@
+@import url('https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;1,9..40,400&family=JetBrains+Mono:wght@400;500;600&display=swap');
 @import 'tailwindcss';
 
 :root {
-  --bg-primary: #131313;
-  --bg-secondary: #1c1c1c;
-  --bg-tertiary: #242424;
-  --bg-elevated: #2a2a2a;
+  --bg-primary: #f5f4f0;
+  --bg-secondary: #ffffff;
+  --bg-tertiary: #eeecea;
+  --bg-elevated: #ffffff;
 
-  --accent: #adc6ff;
-  --accent-dim: rgba(173, 198, 255, 0.15);
-  --accent-hover: rgba(173, 198, 255, 0.25);
+  --sidebar-bg: #111111;
+  --sidebar-width: 64px;
+  --sidebar-gap: 16px;
 
-  --text-primary: #f0f0f0;
-  --text-secondary: #a0a0a0;
-  --text-muted: #606060;
+  --accent: #e8a020;
+  --accent-dim: rgba(232, 160, 32, 0.10);
+  --accent-hover: rgba(232, 160, 32, 0.20);
 
-  --border: rgba(255, 255, 255, 0.08);
-  --border-accent: rgba(173, 198, 255, 0.3);
+  --text-primary: #1a1a1a;
+  --text-secondary: #6b6b6b;
+  --text-muted: #ababab;
 
-  --success: #4ade80;
-  --warning: #facc15;
-  --danger: #f87171;
-  --info: #60a5fa;
+  --border: rgba(0, 0, 0, 0.07);
+  --border-strong: rgba(0, 0, 0, 0.12);
+  --border-accent: rgba(232, 160, 32, 0.35);
+
+  --success: #2d9e6b;
+  --warning: #e8a020;
+  --danger: #e05050;
+  --info: #4a8fe0;
 
   --space-1: 4px;
   --space-2: 8px;
@@ -39,7 +45,7 @@
   --radius-xl: 24px;
   --radius-full: 9999px;
 
-  --font-sans: 'Geist', system-ui, sans-serif;
+  --font-sans: 'DM Sans', system-ui, sans-serif;
   --font-mono: 'JetBrains Mono', monospace;
 
   --text-xs: 11px;
@@ -51,10 +57,11 @@
   --text-3xl: 30px;
   --text-4xl: 36px;
 
-  --shadow-sm: 0 1px 3px rgba(0,0,0,0.4);
-  --shadow-md: 0 4px 12px rgba(0,0,0,0.5);
-  --shadow-lg: 0 8px 32px rgba(0,0,0,0.6);
-  --shadow-accent: 0 0 20px rgba(173,198,255,0.15);
+  --shadow-sm: 0 1px 4px rgba(0,0,0,0.06);
+  --shadow-md: 0 4px 16px rgba(0,0,0,0.08);
+  --shadow-lg: 0 8px 32px rgba(0,0,0,0.10);
+  --shadow-accent: 0 0 20px rgba(232,160,32,0.15);
+  --shadow-sidebar: 0 8px 32px rgba(0,0,0,0.18);
 
   --transition: 150ms ease;
   --transition-slow: 300ms ease;
@@ -87,7 +94,7 @@ code, pre {
   color: var(--accent);
 }
 
-::-webkit-scrollbar { width: 6px; height: 6px; }
-::-webkit-scrollbar-track { background: var(--bg-secondary); }
-::-webkit-scrollbar-thumb { background: var(--border); border-radius: var(--radius-full); }
+::-webkit-scrollbar { width: 5px; height: 5px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--border-strong); border-radius: var(--radius-full); }
 ::-webkit-scrollbar-thumb:hover { background: var(--accent-dim); }
