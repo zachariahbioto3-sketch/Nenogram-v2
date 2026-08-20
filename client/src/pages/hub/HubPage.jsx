@@ -1,9 +1,21 @@
-import { useState, useRef } from 'react'
+﻿import { useState, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAuthStore } from '../../store/authStore'
 import { useFeed, useExplore, useCreatePost, useDeletePost, useLikePost, useFollowUser, useComments, useCreateComment, useDeleteComment } from '../../hooks/useSocial'
 
 const MEDIA_URL = 'http://localhost:8000/media/'
+
+function renderContent(text) {
+  return text.split(/(\s+)/).map((part, i) => {
+    if (/^#\w+$/.test(part)) {
+      return <span key={i} style={{ color: 'var(--accent)', fontWeight: 500 }}>{part}</span>
+    }
+    if (/^@\w+$/.test(part)) {
+      return <span key={i} style={{ color: 'var(--accent)', fontWeight: 500 }}>{part}</span>
+    }
+    return part
+  })
+}
 
 function CommentSection({ postId }) {
   const user = useAuthStore((s) => s.user)
@@ -12,6 +24,7 @@ function CommentSection({ postId }) {
   const { mutate: createComment, isPending } = useCreateComment(postId)
   const { mutate: deleteComment } = useDeleteComment(postId)
   const comments = data?.comments ?? []
+
   const timeAgo = (date) => {
     const diff = (Date.now() - new Date(date)) / 1000
     if (diff < 60) return 'just now'
@@ -19,10 +32,12 @@ function CommentSection({ postId }) {
     if (diff < 86400) return Math.floor(diff / 3600) + 'h'
     return Math.floor(diff / 86400) + 'd'
   }
+
   const handleSubmit = () => {
     if (!text.trim()) return
     createComment(text.trim(), { onSuccess: () => setText('') })
   }
+
   return (
     <div style={{ marginTop: '12px', paddingTop: '12px', borderTop: '1px solid var(--border)' }}>
       {isLoading ? (
@@ -68,6 +83,7 @@ function PostCard({ post, onLike, onDelete, onFollow }) {
   const navigate = useNavigate()
   const isOwn = user?.username === post.author_username
   const [showComments, setShowComments] = useState(false)
+
   const timeAgo = (date) => {
     const diff = (Date.now() - new Date(date)) / 1000
     if (diff < 60) return 'just now'
@@ -75,6 +91,7 @@ function PostCard({ post, onLike, onDelete, onFollow }) {
     if (diff < 86400) return Math.floor(diff / 3600) + 'h'
     return Math.floor(diff / 86400) + 'd'
   }
+
   return (
     <div style={{ background: 'var(--bg-secondary)', border: '1px solid var(--border)', borderRadius: 'var(--radius-lg)', padding: '16px', display: 'flex', gap: '12px' }}>
       <div onClick={() => navigate('/profile/' + post.author_username)} style={{ width: '36px', height: '36px', borderRadius: '50%', background: 'var(--accent-dim)', border: '1px solid var(--border-accent)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, cursor: 'pointer' }}>
@@ -91,7 +108,16 @@ function PostCard({ post, onLike, onDelete, onFollow }) {
             </button>
           )}
         </div>
-        <p style={{ fontSize: '14px', color: 'var(--text-primary)', lineHeight: 1.6, margin: 0, marginBottom: post.image ? '10px' : '10px', wordBreak: 'break-word' }}>{post.content}</p>
+        <p style={{ fontSize: '14px', color: 'var(--text-primary)', lineHeight: 1.6, margin: 0, marginBottom: '10px', wordBreak: 'break-word' }}>
+          {renderContent(post.content)}
+        </p>
+        {post.hashtags && post.hashtags.length > 0 && (
+          <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap', marginBottom: '10px' }}>
+            {post.hashtags.map((tag) => (
+              <span key={tag} style={{ fontSize: '11px', color: 'var(--accent)', background: 'var(--accent-dim)', borderRadius: 'var(--radius-sm)', padding: '2px 8px', fontFamily: 'var(--font-mono)' }}>#{tag}</span>
+            ))}
+          </div>
+        )}
         {post.image && (
           <div style={{ marginBottom: '10px', borderRadius: 'var(--radius-md)', overflow: 'hidden', border: '1px solid var(--border)' }}>
             <img src={post.image.startsWith('http') ? post.image : MEDIA_URL + post.image} alt='post' style={{ width: '100%', maxHeight: '400px', objectFit: 'cover', display: 'block' }} />
@@ -123,33 +149,34 @@ function Composer() {
   const [preview, setPreview] = useState(null)
   const fileRef = useRef(null)
   const max = 280
+
   const handleImage = (e) => {
     const file = e.target.files[0]
     if (!file) return
     setImage(file)
     setPreview(URL.createObjectURL(file))
   }
+
   const removeImage = () => {
     setImage(null)
     setPreview(null)
     if (fileRef.current) fileRef.current.value = ''
   }
+
   const handlePost = () => {
     if (!content.trim() || content.length > max) return
     createPost({ content: content.trim(), image }, {
-      onSuccess: () => {
-        setContent('')
-        removeImage()
-      }
+      onSuccess: () => { setContent(''); removeImage() }
     })
   }
+
   return (
     <div style={{ background: 'var(--bg-secondary)', border: '1px solid var(--border)', borderRadius: 'var(--radius-lg)', padding: '16px', marginBottom: '16px' }}>
-      <textarea value={content} onChange={(e) => setContent(e.target.value)} placeholder='What is on your mind?' rows={3} maxLength={max} style={{ width: '100%', background: 'transparent', border: 'none', outline: 'none', resize: 'none', color: 'var(--text-primary)', fontSize: '14px', lineHeight: 1.6, fontFamily: 'inherit', boxSizing: 'border-box' }} />
+      <textarea value={content} onChange={(e) => setContent(e.target.value)} placeholder='What is on your mind? Use #hashtags and @mentions' rows={3} maxLength={max} style={{ width: '100%', background: 'transparent', border: 'none', outline: 'none', resize: 'none', color: 'var(--text-primary)', fontSize: '14px', lineHeight: 1.6, fontFamily: 'inherit', boxSizing: 'border-box' }} />
       {preview && (
         <div style={{ position: 'relative', marginBottom: '10px', borderRadius: 'var(--radius-md)', overflow: 'hidden', border: '1px solid var(--border)' }}>
           <img src={preview} alt='preview' style={{ width: '100%', maxHeight: '240px', objectFit: 'cover', display: 'block' }} />
-          <button onClick={removeImage} style={{ position: 'absolute', top: '8px', right: '8px', width: '24px', height: '24px', borderRadius: '50%', background: 'rgba(0,0,0,0.6)', border: 'none', color: '#fff', cursor: 'pointer', fontSize: '14px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>�</button>
+          <button onClick={removeImage} style={{ position: 'absolute', top: '8px', right: '8px', width: '24px', height: '24px', borderRadius: '50%', background: 'rgba(0,0,0,0.6)', border: 'none', color: '#fff', cursor: 'pointer', fontSize: '14px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>x</button>
         </div>
       )}
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: '10px', paddingTop: '10px', borderTop: '1px solid var(--border)' }}>
@@ -178,8 +205,16 @@ export default function HubPage() {
   const activeQuery = tab === 'feed' ? feedQuery : exploreQuery
   const posts = activeQuery.data?.posts ?? activeQuery.data ?? []
   const isLoading = activeQuery.isLoading
+
   const handleDelete = (id) => { if (window.confirm('Delete this post?')) deletePost(id) }
-  const tabStyle = (active) => ({ padding: '8px 20px', background: 'none', border: 'none', borderBottom: '2px solid ' + (active ? 'var(--accent)' : 'transparent'), color: active ? 'var(--accent)' : 'var(--text-muted)', fontWeight: active ? 600 : 400, fontSize: '14px', cursor: 'pointer', transition: 'var(--transition)' })
+
+  const tabStyle = (active) => ({
+    padding: '8px 20px', background: 'none', border: 'none',
+    borderBottom: '2px solid ' + (active ? 'var(--accent)' : 'transparent'),
+    color: active ? 'var(--accent)' : 'var(--text-muted)',
+    fontWeight: active ? 600 : 400, fontSize: '14px', cursor: 'pointer', transition: 'var(--transition)'
+  })
+
   return (
     <div style={{ maxWidth: '580px' }}>
       <Composer />
@@ -202,7 +237,7 @@ export default function HubPage() {
         </div>
       ) : (
         <div style={{ textAlign: 'center', padding: '60px 20px', color: 'var(--text-muted)' }}>
-          <div style={{ fontSize: '32px', marginBottom: '12px' }}>??</div>
+          <div style={{ fontSize: '32px', marginBottom: '12px' }}>🌐</div>
           <div style={{ fontSize: '15px', fontWeight: 600, color: 'var(--text-secondary)', marginBottom: '6px' }}>{tab === 'feed' ? 'Your feed is empty' : 'No posts yet'}</div>
           <div style={{ fontSize: '13px' }}>{tab === 'feed' ? 'Follow people or switch to Explore.' : 'Be the first to post.'}</div>
         </div>

@@ -1,5 +1,6 @@
-from rest_framework import serializers
+﻿from rest_framework import serializers
 from .models import Post, Like, Follow, Comment, Notification
+
 
 class PostSerializer(serializers.ModelSerializer):
     author_username = serializers.CharField(source='author.username', read_only=True)
@@ -9,11 +10,19 @@ class PostSerializer(serializers.ModelSerializer):
     is_liked = serializers.SerializerMethodField()
     is_own = serializers.SerializerMethodField()
     is_following = serializers.SerializerMethodField()
+    hashtags = serializers.SerializerMethodField()
 
     class Meta:
         model = Post
-        fields = ['id', 'author_username', 'author_display', 'content', 'image', 'like_count', 'comment_count', 'is_liked', 'is_own', 'is_following', 'created_at']
-        read_only_fields = ['id', 'author_username', 'author_display', 'like_count', 'comment_count', 'is_liked', 'is_own', 'is_following', 'created_at']
+        fields = [
+            'id', 'author_username', 'author_display', 'content', 'image',
+            'like_count', 'comment_count', 'is_liked', 'is_own', 'is_following',
+            'hashtags', 'created_at',
+        ]
+        read_only_fields = [
+            'id', 'author_username', 'author_display', 'like_count', 'comment_count',
+            'is_liked', 'is_own', 'is_following', 'hashtags', 'created_at',
+        ]
 
     def get_like_count(self, obj):
         return obj.likes.count()
@@ -39,6 +48,9 @@ class PostSerializer(serializers.ModelSerializer):
             return Follow.objects.filter(follower=request.user, following=obj.author).exists()
         return False
 
+    def get_hashtags(self, obj):
+        return [ph.hashtag.name for ph in obj.post_hashtags.select_related('hashtag').all()]
+
 
 class FollowSerializer(serializers.ModelSerializer):
     class Meta:
@@ -57,6 +69,7 @@ class CommentSerializer(serializers.ModelSerializer):
 
     def get_author_display(self, obj):
         return obj.author.display_name or obj.author.username
+
 
 class NotificationSerializer(serializers.ModelSerializer):
     actor_username = serializers.CharField(source='actor.username', read_only=True)
