@@ -1,6 +1,12 @@
-import { useParams, useNavigate } from 'react-router-dom'
+﻿import { useParams, useNavigate } from 'react-router-dom'
 import { useAuthStore } from '../../store/authStore'
 import { useUserPosts, useFollowUser } from '../../hooks/useSocial'
+
+const IconHeart = ({ filled }) => (
+  <svg width="12" height="12" fill={filled ? 'currentColor' : 'none'} stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+    <path d="M20.84 4.61a5.5 5.5 0 00-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 00-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 000-7.78z"/>
+  </svg>
+)
 
 export default function ProfilePage() {
   const { username } = useParams()
@@ -11,6 +17,7 @@ export default function ProfilePage() {
   const { mutate: followUser } = useFollowUser()
   const posts = data?.posts ?? []
   const profile = posts[0] ? { username: posts[0].author_username, display: posts[0].author_display, is_following: posts[0].is_following } : null
+
   const timeAgo = (date) => {
     const diff = (Date.now() - new Date(date)) / 1000
     if (diff < 60) return 'just now'
@@ -18,6 +25,7 @@ export default function ProfilePage() {
     if (diff < 86400) return Math.floor(diff / 3600) + 'h'
     return Math.floor(diff / 86400) + 'd'
   }
+
   return (
     <div style={{ maxWidth: '580px' }}>
       <button onClick={() => navigate(-1)} style={{ marginBottom: '16px', padding: '6px 14px', background: 'transparent', border: '1px solid var(--border)', borderRadius: 'var(--radius-sm)', color: 'var(--text-secondary)', fontSize: '12px', cursor: 'pointer' }}>Back</button>
@@ -45,7 +53,9 @@ export default function ProfilePage() {
               <p style={{ fontSize: '14px', color: 'var(--text-primary)', lineHeight: 1.6, margin: 0, marginBottom: '10px' }}>{post.content}</p>
               <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
                 <span style={{ fontSize: '11px', color: 'var(--text-muted)', fontFamily: 'var(--font-mono)' }}>{timeAgo(post.created_at)}</span>
-                <span style={{ fontSize: '12px', color: post.is_liked ? 'var(--danger)' : 'var(--text-muted)' }}>? {post.like_count}</span>
+                <span style={{ fontSize: '12px', color: post.is_liked ? 'var(--danger)' : 'var(--text-muted)', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                  <IconHeart filled={post.is_liked} /> {post.like_count}
+                </span>
               </div>
             </div>
           ))}

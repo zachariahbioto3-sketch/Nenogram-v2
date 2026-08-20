@@ -1,4 +1,4 @@
-import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom"
+﻿import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom"
 import { useAuthStore } from "./store/authStore"
 import Notifications from "./components/ui/Notifications"
 import AppLayout from "./components/layout/AppLayout"
@@ -15,6 +15,7 @@ import NanoPage from "./pages/nano/NanoPage"
 import SettingsPage from "./pages/settings/SettingsPage"
 import HackathonPage from "./pages/hackathon/HackathonPage"
 import WorkspacePage from "./pages/workspace/WorkspacePage"
+import NotificationsPage from "./pages/notifications/NotificationsPage"
 
 const ProtectedRoute = ({ children }) => {
   const isAuthenticated = useAuthStore((s) => s.isAuthenticated)
