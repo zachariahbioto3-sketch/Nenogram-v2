@@ -42,6 +42,7 @@ export default function App() {
           <Route path="settings" element={<SettingsPage />} />
           <Route path="hackathon" element={<HackathonPage />} />
           <Route path="workspace" element={<WorkspacePage />} />
+          <Route path="notifications" element={<NotificationsPage />} />
         </Route>
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>

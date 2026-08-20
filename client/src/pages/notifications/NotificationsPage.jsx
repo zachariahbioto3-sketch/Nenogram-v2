@@ -1,0 +1,66 @@
+import { useEffect } from 'react'
+import { useNavigate } from 'react-router-dom'
+import { useNotifications, useMarkNotificationsRead } from '../../hooks/useSocial'
+
+const icons = {
+  like: '?',
+  comment: '??',
+  follow: '??',
+}
+
+const messages = {
+  like: 'liked your post',
+  comment: 'commented on your post',
+  follow: 'started following you',
+}
+
+export default function NotificationsPage() {
+  const navigate = useNavigate()
+  const { data, isLoading, hasNextPage, fetchNextPage, isFetchingNextPage } = useNotifications()
+  const { mutate: markRead } = useMarkNotificationsRead()
+  const notifications = data?.notifications ?? []
+
+  useEffect(() => { markRead() }, [])
+
+  const timeAgo = (date) => {
+    const diff = (Date.now() - new Date(date)) / 1000
+    if (diff < 60) return 'just now'
+    if (diff < 3600) return Math.floor(diff / 60) + 'm'
+    if (diff < 86400) return Math.floor(diff / 3600) + 'h'
+    return Math.floor(diff / 86400) + 'd'
+  }
+
+  return (
+    <div style={{ maxWidth: '580px' }}>
+      <div style={{ fontSize: '16px', fontWeight: 700, color: 'var(--text-primary)', marginBottom: '16px' }}>Notifications</div>
+      {isLoading ? (
+        <div style={{ color: 'var(--text-muted)', fontSize: '14px' }}>Loading...</div>
+      ) : notifications.length > 0 ? (
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+          {notifications.map((n) => (
+            <div key={n.id} onClick={() => n.post_id && navigate('/hub')} style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '12px 16px', background: n.is_read ? 'var(--bg-secondary)' : 'var(--accent-dim)', border: '1px solid ' + (n.is_read ? 'var(--border)' : 'var(--border-accent)'), borderRadius: 'var(--radius-lg)', cursor: n.post_id ? 'pointer' : 'default', transition: 'var(--transition)' }}>
+              <div style={{ width: '36px', height: '36px', borderRadius: '50%', background: 'var(--bg-tertiary)', border: '1px solid var(--border)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                <span style={{ fontSize: '16px' }}>{icons[n.notif_type]}</span>
+              </div>
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <span style={{ fontSize: '13px', fontWeight: 600, color: 'var(--text-primary)' }}>{n.actor_display}</span>
+                <span style={{ fontSize: '13px', color: 'var(--text-secondary)' }}> {messages[n.notif_type]}</span>
+              </div>
+              <span style={{ fontSize: '11px', color: 'var(--text-muted)', fontFamily: 'var(--font-mono)', flexShrink: 0 }}>{timeAgo(n.created_at)}</span>
+            </div>
+          ))}
+          {hasNextPage && (
+            <button onClick={() => fetchNextPage()} disabled={isFetchingNextPage} style={{ padding: '10px', background: 'transparent', border: '1px solid var(--border)', borderRadius: 'var(--radius-md)', color: 'var(--text-muted)', fontSize: '13px', cursor: 'pointer' }}>
+              {isFetchingNextPage ? 'Loading...' : 'Load more'}
+            </button>
+          )}
+        </div>
+      ) : (
+        <div style={{ textAlign: 'center', padding: '60px 20px', color: 'var(--text-muted)' }}>
+          <div style={{ fontSize: '32px', marginBottom: '12px' }}>??</div>
+          <div style={{ fontSize: '15px', fontWeight: 600, color: 'var(--text-secondary)' }}>No notifications yet</div>
+        </div>
+      )}
+    </div>
+  )
+}

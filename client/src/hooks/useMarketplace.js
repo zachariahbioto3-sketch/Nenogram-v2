@@ -136,7 +136,10 @@ export function useApproveMilestone(milestoneId) {
 export function useJobBids(jobId) {
   return useQuery({
     queryKey: ["job-bids", jobId],
-    queryFn: () => marketplaceAPI.getJobBids(jobId).then((r) => r.data),
+    queryFn: () => marketplaceAPI.getJobBids(jobId).then((r) => {
+      const data = r.data
+      return Array.isArray(data) ? data : (data?.results ?? [])
+    }),
     enabled: !!jobId,
   })
 }

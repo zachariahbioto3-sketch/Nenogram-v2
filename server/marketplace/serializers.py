@@ -78,7 +78,7 @@ class BidSerializer(serializers.ModelSerializer):
             "timeline_days", "cover_letter", "proposed_milestones",
             "status", "created_at",
         ]
-        read_only_fields = ["id", "developer", "status", "created_at"]
+        read_only_fields = ["id", "job", "developer", "status", "created_at"]
 
     def create(self, validated_data):
         validated_data["developer"] = self.context["request"].user

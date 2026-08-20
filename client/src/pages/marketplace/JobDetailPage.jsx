@@ -125,7 +125,7 @@ export default function JobDetailPage() {
           <div>
             <div style={{ fontSize: '11px', color: 'var(--text-muted)', fontFamily: 'var(--font-mono)', marginBottom: '6px' }}>skills required</div>
             <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px' }}>
-              {job.skills_required.split(',').map((s) => s.trim()).filter(Boolean).map((s) => (
+              {(Array.isArray(job.skills_required) ? job.skills_required : job.skills_required.split(',').map((s) => s.trim())).filter(Boolean).map((s) => (
                 <span key={s} style={{ fontSize: '11px', color: 'var(--text-secondary)', background: 'var(--bg-tertiary)', border: '1px solid var(--border)', padding: '2px 8px', borderRadius: 'var(--radius-sm)' }}>{s}</span>
               ))}
             </div>
