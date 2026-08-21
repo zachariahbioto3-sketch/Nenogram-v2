@@ -5,7 +5,8 @@ export const navLinks = [
   { label: 'Wallet',      path: '/wallet',     icon: 'wallet' },
   { label: 'Nano',        path: '/nano',       icon: 'nano' },
   { label: 'Hackathons',  path: '/hackathon',  icon: 'trophy' },
-  { label: 'Profile',     path: '/profile',    icon: 'user' },
+  { label: 'Profile', path: '/profile', icon: 'user' },
+  { label: 'Contracts', path: '/contracts'}
 ]
 
 export const bottomLinks = [

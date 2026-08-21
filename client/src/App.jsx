@@ -16,6 +16,7 @@ import SettingsPage     from './pages/settings/SettingsPage'
 import HackathonPage    from './pages/hackathon/HackathonPage'
 import NotificationsPage from './pages/notifications/NotificationsPage'
 import NegotiationRoomPage from './pages/negotiation/NegotiationRoomPage'
+import ContractsPage from './pages/contracts/ContractsPage'
 import NegotiationPage from './pages/negotiation/NegotiationRoomPage'
 
 const ProtectedRoute = ({ children }) => {
@@ -42,10 +43,10 @@ export default function App() {
           <Route path='hackathon'              element={<HackathonPage />} />
           <Route path='notifications' element={<NotificationsPage />} />
           <Route path='negotiation/:roomId' element={<NegotiationRoomPage />} />
+          <Route path='contracts'              element={<ContractsPage />} />
         </Route>
         <Route path='*' element={<Navigate to='/' replace />} />
       </Routes>
     </BrowserRouter>
   )
 }
-
