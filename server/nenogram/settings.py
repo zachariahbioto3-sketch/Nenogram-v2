@@ -25,7 +25,7 @@ INSTALLED_APPS = [
     'social',
     'nano',
     'hackathon',
-
+    'negotiation',
 ]
 
 MIDDLEWARE = [
@@ -128,3 +128,6 @@ MPESA_INITIATOR_NAME = config('MPESA_INITIATOR_NAME', default='testapi')
 MPESA_SECURITY_CREDENTIAL = config('MPESA_SECURITY_CREDENTIAL', default='')
 MPESA_B2C_RESULT_URL = config('MPESA_B2C_RESULT_URL', default='http://localhost:8080/api/wallet/mpesa/b2c/result/')
 MPESA_B2C_TIMEOUT_URL = config('MPESA_B2C_TIMEOUT_URL', default='http://localhost:8080/api/wallet/mpesa/b2c/timeout/')
+
+ASGI_APPLICATION = "nenogram.asgi.application"
+CHANNEL_LAYERS = {"default": {"BACKEND": "channels_redis.core.RedisChannelLayer", "CONFIG": {"hosts": [("127.0.0.1", 6379)]}}}

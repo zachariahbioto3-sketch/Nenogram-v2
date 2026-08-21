@@ -9,11 +9,11 @@ function BidCard({ bid, isOwner, onAccept, onReject, accepting, rejecting }) {
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
           <div style={{ width: '28px', height: '28px', borderRadius: '50%', background: 'var(--accent-dim)', border: '1px solid var(--border-accent)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-            <span style={{ fontSize: '11px', color: 'var(--accent)', fontWeight: 700 }}>{bid.developer_name[0].toUpperCase()}</span>
+            <span style={{ fontSize: '11px', color: 'var(--accent)', fontWeight: 700 }}>{(bid.developer?.username?.[0] ?? 'D').toUpperCase()}</span>
           </div>
           <div>
-            <div style={{ fontSize: '13px', fontWeight: 600, color: 'var(--text-primary)' }}>{bid.developer_name}</div>
-            <div style={{ fontSize: '11px', color: 'var(--text-muted)', fontFamily: 'var(--font-mono)' }}>{bid.developer_email}</div>
+            <div style={{ fontSize: '13px', fontWeight: 600, color: 'var(--text-primary)' }}>{bid.developer?.username}</div>
+            <div style={{ fontSize: '11px', color: 'var(--text-muted)', fontFamily: 'var(--font-mono)' }}>{bid.developer?.email}</div>
           </div>
         </div>
         <span style={{ fontSize: '11px', padding: '3px 10px', borderRadius: 'var(--radius-sm)', fontFamily: 'var(--font-mono)', background: bid.status === 'accepted' ? 'rgba(74,222,128,0.1)' : bid.status === 'rejected' ? 'rgba(248,113,113,0.1)' : 'var(--accent-dim)', color: bid.status === 'accepted' ? 'var(--success)' : bid.status === 'rejected' ? 'var(--danger)' : 'var(--accent)' }}>
@@ -103,9 +103,9 @@ export default function JobDetailPage() {
   if (jobLoading) return <div style={{ color: 'var(--text-muted)', fontSize: '14px', padding: '40px' }}>Loading job...</div>
   if (!job) return <div style={{ color: 'var(--danger)', fontSize: '14px', padding: '40px' }}>Job not found.</div>
 
-  const isOwner = user?.email === job.client_email
+  const isOwner = user?.id === job.client?.id
   const isDevelope = user?.is_developer
-  const myBid = bids?.find((b) => b.developer_email === user?.email)
+  const myBid = bids?.find((b) => b.developer?.id === user?.id)
   const canBid = isDevelope && !isOwner && !myBid && job.status === 'open'
 
   return (
@@ -184,3 +184,5 @@ export default function JobDetailPage() {
     </div>
   )
 }
+
+

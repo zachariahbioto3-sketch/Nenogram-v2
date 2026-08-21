@@ -15,6 +15,8 @@ import NanoPage         from './pages/nano/NanoPage'
 import SettingsPage     from './pages/settings/SettingsPage'
 import HackathonPage    from './pages/hackathon/HackathonPage'
 import NotificationsPage from './pages/notifications/NotificationsPage'
+import NegotiationRoomPage from './pages/negotiation/NegotiationRoomPage'
+import NegotiationPage from './pages/negotiation/NegotiationRoomPage'
 
 const ProtectedRoute = ({ children }) => {
   const isAuthenticated = useAuthStore((s) => s.isAuthenticated)
@@ -38,10 +40,12 @@ export default function App() {
           <Route path='nano'                    element={<NanoPage />} />
           <Route path='settings'               element={<SettingsPage />} />
           <Route path='hackathon'              element={<HackathonPage />} />
-          <Route path='notifications'          element={<NotificationsPage />} />
+          <Route path='notifications' element={<NotificationsPage />} />
+          <Route path='negotiation/:roomId' element={<NegotiationRoomPage />} />
         </Route>
         <Route path='*' element={<Navigate to='/' replace />} />
       </Routes>
     </BrowserRouter>
   )
 }
+

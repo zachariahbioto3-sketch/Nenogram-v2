@@ -15,6 +15,7 @@ from .serializers import (
     MilestoneSerializer, MilestoneSubmissionSerializer, DisputeSerializer
 )
 from wallet.models import Wallet, Escrow, Transaction
+from negotiation.models import NegotiationRoom, NegotiationMilestone
 
 
 # ─── CATEGORIES ──────────────────────────────────────────────────────────────
@@ -204,6 +205,7 @@ def accept_bid(request, bid_id):
         total_amount=bid.amount,
         currency_type=bid.currency_type,
     )
+    room = NegotiationRoom.objects.create(bid=bid, contract=contract, client=request.user, developer=bid.developer)
 
     for i, m in enumerate(bid.proposed_milestones or []):
         Milestone.objects.create(
@@ -214,6 +216,7 @@ def accept_bid(request, bid_id):
             order=i + 1,
             escrow=escrow if i == 0 else None,
         )
+        NegotiationMilestone.objects.create(room=room, title=m.get("title", f"Step {i+1}"), amount=m.get("amount", 0), order=i+1, due_days=m.get("days", 7))
 
     if not bid.proposed_milestones:
         Milestone.objects.create(
@@ -327,3 +330,5 @@ def approve_milestone(request, milestone_id):
 class DisputeCreateView(generics.CreateAPIView):
     serializer_class = DisputeSerializer
     permission_classes = [IsAuthenticated]
+
+

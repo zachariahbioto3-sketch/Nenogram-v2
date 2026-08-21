@@ -11,6 +11,7 @@ urlpatterns = [
     path('api/social/', include('social.urls')),
     path('api/nano/', include('nano.urls')),
     path('api/hackathon/', include('hackathon.urls')),
+    path('api/negotiation/', include('negotiation.urls')),
 ]
 
 if settings.DEBUG:
