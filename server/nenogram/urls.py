@@ -4,14 +4,13 @@ from django.conf import settings
 from django.conf.urls.static import static
 
 urlpatterns = [
-    path("admin/", admin.site.urls),
-    path("api/auth/", include("accounts.urls")),
-    path("api/wallet/", include("wallet.urls")),
-    path("api/marketplace/", include("marketplace.urls")),
-    path("api/social/", include("social.urls")),
-    path("api/nano/", include("nano.urls")),
-    path("api/hackathon/", include("hackathon.urls")),
-    path("api/workspace/", include("workspace.urls")),
+    path('admin/', admin.site.urls),
+    path('api/auth/', include('accounts.urls')),
+    path('api/wallet/', include('wallet.urls')),
+    path('api/marketplace/', include('marketplace.urls')),
+    path('api/social/', include('social.urls')),
+    path('api/nano/', include('nano.urls')),
+    path('api/hackathon/', include('hackathon.urls')),
 ]
 
 if settings.DEBUG:

@@ -1,12 +1,12 @@
 from rest_framework import serializers
 from .models import Hackathon, HackathonParticipant, Submission, SubmissionVote
-from nano.models import Nano
+from nano.models import NanoFile
 
 
-class NanoMiniSerializer(serializers.ModelSerializer):
+class NanoFileMiniSerializer(serializers.ModelSerializer):
     class Meta:
-        model = Nano
-        fields = ['id', 'title', 'slug', 'language']
+        model = NanoFile
+        fields = ['id', 'name', 'language', 'file_type']
 
 
 class HackathonSerializer(serializers.ModelSerializer):
@@ -37,9 +37,9 @@ class HackathonSerializer(serializers.ModelSerializer):
 
 
 class SubmissionSerializer(serializers.ModelSerializer):
-    nano = NanoMiniSerializer(read_only=True)
-    nano_id = serializers.PrimaryKeyRelatedField(
-        queryset=Nano.objects.all(), source='nano', write_only=True, required=False, allow_null=True
+    nano_file = NanoFileMiniSerializer(read_only=True)
+    nano_file_id = serializers.PrimaryKeyRelatedField(
+        queryset=NanoFile.objects.all(), source='nano_file', write_only=True, required=False, allow_null=True
     )
     participant_username = serializers.CharField(source='participant.username', read_only=True)
     participant_avatar = serializers.SerializerMethodField()
@@ -50,7 +50,7 @@ class SubmissionSerializer(serializers.ModelSerializer):
         model = Submission
         fields = [
             'id', 'hackathon', 'participant_username', 'participant_avatar',
-            'nano', 'nano_id', 'repo_url', 'description',
+            'nano_file', 'nano_file_id', 'repo_url', 'description',
             'submitted_at', 'vote_count', 'has_voted'
         ]
         read_only_fields = ['hackathon', 'participant_username', 'submitted_at']
@@ -71,8 +71,8 @@ class SubmissionSerializer(serializers.ModelSerializer):
         return obj.votes.filter(voter=request.user).exists()
 
     def validate(self, data):
-        nano = data.get('nano')
+        nano_file = data.get('nano_file')
         repo_url = data.get('repo_url', '')
-        if not nano and not repo_url:
-            raise serializers.ValidationError('Provide either a Nano or a repo URL.')
+        if not nano_file and not repo_url:
+            raise serializers.ValidationError('Provide either a Nano file or a repo URL.')
         return data

@@ -1,4 +1,4 @@
-from pathlib import Path
+﻿from pathlib import Path
 from decouple import config
 
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -25,7 +25,7 @@ INSTALLED_APPS = [
     'social',
     'nano',
     'hackathon',
-    'workspace',
+
 ]
 
 MIDDLEWARE = [
@@ -123,3 +123,8 @@ MPESA_SHORTCODE = config('MPESA_SHORTCODE', default='174379')
 MPESA_PASSKEY = config('MPESA_PASSKEY', default='')
 MPESA_CALLBACK_URL = config('MPESA_CALLBACK_URL', default='http://localhost:8080/api/wallet/mpesa/callback/')
 MPESA_BASE_URL = 'https://sandbox.safaricom.co.ke' if MPESA_ENV == 'sandbox' else 'https://api.safaricom.co.ke'
+
+MPESA_INITIATOR_NAME = config('MPESA_INITIATOR_NAME', default='testapi')
+MPESA_SECURITY_CREDENTIAL = config('MPESA_SECURITY_CREDENTIAL', default='')
+MPESA_B2C_RESULT_URL = config('MPESA_B2C_RESULT_URL', default='http://localhost:8080/api/wallet/mpesa/b2c/result/')
+MPESA_B2C_TIMEOUT_URL = config('MPESA_B2C_TIMEOUT_URL', default='http://localhost:8080/api/wallet/mpesa/b2c/timeout/')

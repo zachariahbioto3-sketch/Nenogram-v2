@@ -1,26 +1,41 @@
-import { create } from "zustand"
+import { create } from 'zustand'
+import { persist } from 'zustand/middleware'
+import { DEFAULT_THEME } from '../config/themes'
 
-export const useUIStore = create((set) => ({
-  notifications: [],
+const applyTheme = (themeId) => {
+  document.documentElement.setAttribute('data-theme', themeId)
+}
 
-  addNotification: (message, type = "info") => set((state) => ({
-    notifications: [...state.notifications, { id: Date.now(), message, type }],
-  })),
+export const useUIStore = create(persist(
+  (set, get) => ({
+    notifications: [],
+    modals: {},
+    theme: DEFAULT_THEME,
 
-  removeNotification: (id) => set((state) => ({
-    notifications: state.notifications.filter((n) => n.id !== id),
-  })),
+    setTheme: (themeId) => {
+      applyTheme(themeId)
+      set({ theme: themeId })
+    },
 
-  clearNotifications: () => set({ notifications: [] }),
+    initTheme: () => applyTheme(get().theme),
 
-  sidebarOpen: true,
-  toggleSidebar: () => set((state) => ({ sidebarOpen: !state.sidebarOpen })),
-  closeSidebar: () => set({ sidebarOpen: false }),
-  openSidebar: () => set({ sidebarOpen: true }),
+    addNotification: (notification) => {
+      const id = Date.now()
+      set((s) => ({ notifications: [...s.notifications, { id, ...notification }] }))
+      if (notification.duration !== 0) {
+        setTimeout(() => get().removeNotification(id), notification.duration || 4000)
+      }
+      return id
+    },
 
-  activeAccent: "#adc6ff",
-  setAccent: (color) => {
-    document.documentElement.style.setProperty("--accent", color)
-    set({ activeAccent: color })
-  },
-}))
+    removeNotification: (id) =>
+      set((s) => ({ notifications: s.notifications.filter((n) => n.id !== id) })),
+
+    openModal: (key, data = {}) =>
+      set((s) => ({ modals: { ...s.modals, [key]: { open: true, data } } })),
+
+    closeModal: (key) =>
+      set((s) => ({ modals: { ...s.modals, [key]: { open: false, data: {} } } })),
+  }),
+  { name: 'nenogram-ui', partialize: (s) => ({ theme: s.theme }) }
+))

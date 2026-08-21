@@ -1,8 +1,13 @@
 from django.urls import path
+from .views import FolderListCreateView, FolderDetailView, FileListCreateView, FileDetailView
 from . import views
 
 urlpatterns = [
-    path('', views.nano_list_create, name='nano_list_create'),
-    path('public/', views.nano_public, name='nano_public'),
-    path('<slug:slug>/', views.nano_detail, name='nano_detail'),
+    path('folders/', FolderListCreateView.as_view(), name='nano-folders'),
+    path('folders/<int:pk>/', FolderDetailView.as_view(), name='nano-folder-detail'),
+    path('files/', FileListCreateView.as_view(), name='nano-files'),
+    path('files/<int:pk>/', FileDetailView.as_view(), name='nano-file-detail'),
+    path('files/<int:pk>/publish/', views.publish_file, name='nano-file-publish'),
+    path('files/<int:pk>/unpublish/', views.unpublish_file, name='nano-file-unpublish'),
+    path('feed/', views.nano_feed, name='nano-feed'),
 ]

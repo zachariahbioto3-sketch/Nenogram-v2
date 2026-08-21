@@ -49,7 +49,7 @@ class HackathonParticipant(models.Model):
 class Submission(models.Model):
     hackathon = models.ForeignKey(Hackathon, on_delete=models.CASCADE, related_name='submissions')
     participant = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='hackathon_submissions')
-    nano = models.ForeignKey('nano.Nano', on_delete=models.SET_NULL, null=True, blank=True, related_name='hackathon_submissions')
+    nano_file = models.ForeignKey('nano.NanoFile', on_delete=models.SET_NULL, null=True, blank=True, related_name='hackathon_submissions')
     repo_url = models.URLField(blank=True)
     description = models.TextField(blank=True)
     submitted_at = models.DateTimeField(auto_now_add=True)

@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { useAuthStore } from '../../store/authStore'
 import { useUpgradeDeveloper } from '../../hooks/useAuth'
+import ThemePicker from '../../components/ui/ThemePicker'
 
 function Section({ title, children }) {
   return (
@@ -55,25 +56,27 @@ export default function SettingsPage() {
   return (
     <div style={{ maxWidth: '560px' }}>
 
-      {/* Account */}
-      <Section title='Account'>
-        <Field label='email' value={user?.email ?? '-'} />
-        <Field label='username' value={user?.username ?? '-'} />
-        <Field label='preferred currency' value={user?.preferred_currency ?? 'KES'} />
-        <Field label='member since' value={user?.date_joined ? new Date(user.date_joined).toLocaleDateString('en-KE', { day: 'numeric', month: 'long', year: 'numeric' }) : '-'} />
+      <Section title="Appearance">
+        <ThemePicker />
       </Section>
 
-      {/* Developer */}
-      <Section title='Developer Profile'>
+      <Section title="Account">
+        <Field label="email" value={user?.email ?? '-'} />
+        <Field label="username" value={user?.username ?? '-'} />
+        <Field label="preferred currency" value={user?.preferred_currency ?? 'KES'} />
+        <Field label="member since" value={user?.date_joined ? new Date(user.date_joined).toLocaleDateString('en-KE', { day: 'numeric', month: 'long', year: 'numeric' }) : '-'} />
+      </Section>
+
+      <Section title="Developer Profile">
         {user?.is_developer ? (
           <div>
             <div style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', background: 'var(--accent-dim)', border: '1px solid var(--border-accent)', borderRadius: 'var(--radius-sm)', padding: '4px 10px', marginBottom: '16px' }}>
               <span style={{ width: '6px', height: '6px', borderRadius: '50%', background: 'var(--success)', display: 'inline-block' }} />
               <span style={{ fontSize: '12px', color: 'var(--accent)', fontFamily: 'var(--font-mono)' }}>developer active</span>
             </div>
-            <Field label='tagline' value={user.developer_profile?.tagline ?? '-'} />
-            <Field label='hourly rate' value={user.developer_profile?.hourly_rate ? 'KES ' + user.developer_profile.hourly_rate + ' / hr' : '-'} />
-            <Field label='skills' value={Array.isArray(user.developer_profile?.skills) ? user.developer_profile.skills.join(', ') : user.developer_profile?.skills ?? '-'} />
+            <Field label="tagline" value={user.developer_profile?.tagline ?? '-'} />
+            <Field label="hourly rate" value={user.developer_profile?.hourly_rate ? 'KES ' + user.developer_profile.hourly_rate + ' / hr' : '-'} />
+            <Field label="skills" value={Array.isArray(user.developer_profile?.skills) ? user.developer_profile.skills.join(', ') : user.developer_profile?.skills ?? '-'} />
           </div>
         ) : (
           <div>
@@ -82,24 +85,24 @@ export default function SettingsPage() {
             </p>
             <div style={{ marginBottom: '12px' }}>
               <label style={{ fontSize: '11px', color: 'var(--text-muted)', display: 'block', marginBottom: '5px', fontFamily: 'var(--font-mono)' }}>tagline</label>
-              <input value={form.tagline} onChange={set('tagline')} placeholder='e.g. Full-stack developer specializing in React' style={inputStyle('tagline')} />
+              <input value={form.tagline} onChange={set('tagline')} placeholder="e.g. Full-stack developer specializing in React" style={inputStyle('tagline')} />
               {errors.tagline && <div style={{ fontSize: '11px', color: 'var(--danger)', marginTop: '4px' }}>{errors.tagline}</div>}
             </div>
             <div style={{ marginBottom: '12px' }}>
               <label style={{ fontSize: '11px', color: 'var(--text-muted)', display: 'block', marginBottom: '5px', fontFamily: 'var(--font-mono)' }}>skills (comma separated)</label>
-              <input value={form.skills} onChange={set('skills')} placeholder='e.g. React, Django, PostgreSQL' style={inputStyle('skills')} />
+              <input value={form.skills} onChange={set('skills')} placeholder="e.g. React, Django, PostgreSQL" style={inputStyle('skills')} />
               {errors.skills && <div style={{ fontSize: '11px', color: 'var(--danger)', marginTop: '4px' }}>{errors.skills}</div>}
             </div>
             <div style={{ marginBottom: '12px' }}>
               <label style={{ fontSize: '11px', color: 'var(--text-muted)', display: 'block', marginBottom: '5px', fontFamily: 'var(--font-mono)' }}>hourly rate (KES)</label>
-              <input type='number' value={form.hourly_rate} onChange={set('hourly_rate')} placeholder='e.g. 2500' style={inputStyle('hourly_rate')} />
+              <input type="number" value={form.hourly_rate} onChange={set('hourly_rate')} placeholder="e.g. 2500" style={inputStyle('hourly_rate')} />
               {errors.hourly_rate && <div style={{ fontSize: '11px', color: 'var(--danger)', marginTop: '4px' }}>{errors.hourly_rate}</div>}
             </div>
             <div style={{ marginBottom: '20px' }}>
               <label style={{ fontSize: '11px', color: 'var(--text-muted)', display: 'block', marginBottom: '5px', fontFamily: 'var(--font-mono)' }}>portfolio url (optional)</label>
-              <input value={form.portfolio_url} onChange={set('portfolio_url')} placeholder='https://yourportfolio.com' style={inputStyle('portfolio_url')} />
+              <input value={form.portfolio_url} onChange={set('portfolio_url')} placeholder="https://yourportfolio.com" style={inputStyle('portfolio_url')} />
             </div>
-            <button onClick={handleUpgrade} disabled={isPending} style={{ padding: '10px 24px', background: 'var(--accent)', border: 'none', borderRadius: 'var(--radius-md)', color: '#0a0a0a', fontWeight: 700, fontSize: '13px', cursor: isPending ? 'not-allowed' : 'pointer', opacity: isPending ? 0.7 : 1 }}>
+            <button onClick={handleUpgrade} disabled={isPending} style={{ padding: '10px 24px', background: 'var(--accent)', border: 'none', borderRadius: 'var(--radius-md)', color: '#fff', fontWeight: 700, fontSize: '13px', cursor: isPending ? 'not-allowed' : 'pointer', opacity: isPending ? 0.7 : 1 }}>
               {isPending ? 'Upgrading...' : 'Upgrade to Developer'}
             </button>
           </div>

@@ -51,3 +51,32 @@ def stk_push(phone, amount, reference, description='Nenogram Deposit'):
     response = requests.post(url, json=payload, headers=headers, timeout=30)
     response.raise_for_status()
     return response.json()
+
+
+def b2c_transfer(phone, amount, reference, remarks='Nenogram Withdrawal'):
+    token = get_access_token()
+    phone = str(phone).strip()
+    if phone.startswith('0'):
+        phone = '254' + phone[1:]
+    elif phone.startswith('+'):
+        phone = phone[1:]
+    url = settings.MPESA_BASE_URL + '/mpesa/b2c/v1/paymentrequest'
+    payload = {
+        'InitiatorName': settings.MPESA_INITIATOR_NAME,
+        'SecurityCredential': settings.MPESA_SECURITY_CREDENTIAL,
+        'CommandID': 'BusinessPayment',
+        'Amount': int(amount),
+        'PartyA': settings.MPESA_SHORTCODE,
+        'PartyB': phone,
+        'Remarks': remarks,
+        'QueueTimeOutURL': settings.MPESA_B2C_TIMEOUT_URL,
+        'ResultURL': settings.MPESA_B2C_RESULT_URL,
+        'Occasion': reference,
+    }
+    headers = {
+        'Authorization': 'Bearer ' + token,
+        'Content-Type': 'application/json',
+    }
+    response = requests.post(url, json=payload, headers=headers, timeout=30)
+    response.raise_for_status()
+    return response.json()

@@ -1,6 +1,6 @@
-import { useState } from 'react'
+﻿import { useState } from 'react'
 import { useHackathons, useHackathon, useJoinHackathon, useSubmissions, useCreateSubmission, useVoteSubmission } from '../../hooks/useHackathon'
-import { useNanos } from '../../hooks/useNano'
+import { useFiles } from '../../hooks/useNano'
 import { useAuthStore } from '../../store/authStore'
 
 const STATUS_TABS = ['all', 'upcoming', 'active', 'ended']
@@ -61,12 +61,12 @@ function SubmitModal({ hackathonId, onClose }) {
   const [nanoId, setNanoId] = useState('')
   const [repoUrl, setRepoUrl] = useState('')
   const [description, setDescription] = useState('')
-  const { data: nanos } = useNanos()
+  const { data: nanos } = useFiles(null)
   const submit = useCreateSubmission(hackathonId)
 
   const handle = () => {
     const data = { repo_url: repoUrl, description }
-    if (nanoId) data.nano_id = nanoId
+    if (nanoId) data.nano_file_id = parseInt(nanoId)
     submit.mutate(data, { onSuccess: onClose })
   }
 
@@ -78,7 +78,7 @@ function SubmitModal({ hackathonId, onClose }) {
         <select value={nanoId} onChange={e => setNanoId(e.target.value)}
           style={{ width: '100%', background: 'var(--bg-tertiary)', border: '1px solid var(--border)', borderRadius: 'var(--radius-sm)', color: 'var(--text-primary)', padding: '8px 10px', marginBottom: 'var(--space-3)', fontSize: '0.9rem' }}>
           <option value=''>None</option>
-          {nanos?.results?.map(n => <option key={n.id} value={n.id}>{n.title}</option>)}
+          {Array.isArray(nanos) ? nanos.map(n => <option key={n.id} value={n.id}>{n.name}</option>) : []}
         </select>
         <label style={{ display: 'block', color: 'var(--text-secondary)', fontSize: '0.82rem', marginBottom: 4 }}>Repo URL (optional if Nano selected)</label>
         <input value={repoUrl} onChange={e => setRepoUrl(e.target.value)} placeholder='https://github.com/...'
@@ -132,7 +132,7 @@ function LeaderboardTab({ hackathonId, isActive, isJoined }) {
           </div>
           <button onClick={() => vote.mutate(s.id)} disabled={s.participant_username === user?.username}
             style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', background: s.has_voted ? 'var(--accent-dim)' : 'var(--bg-tertiary)', border: `1px solid ${s.has_voted ? 'var(--border-accent)' : 'var(--border)'}`, borderRadius: 'var(--radius-sm)', padding: '6px 12px', cursor: s.participant_username === user?.username ? 'default' : 'pointer', color: s.has_voted ? 'var(--accent)' : 'var(--text-secondary)', fontSize: '0.8rem', gap: 2 }}>
-            <span style={{ fontSize: '1rem' }}>▲</span>
+            <span style={{ fontSize: '1rem' }}>â–²</span>
             {s.vote_count}
           </button>
         </div>
@@ -207,7 +207,7 @@ export default function HackathonPage() {
       {isLoading && <p style={{ color: 'var(--text-muted)' }}>Loading hackathons...</p>}
       {!isLoading && hackathons.length === 0 && (
         <div style={{ textAlign: 'center', padding: 'var(--space-12) 0', color: 'var(--text-muted)' }}>
-          <p style={{ fontSize: '2rem', marginBottom: 'var(--space-3)' }}>🏁</p>
+          <p style={{ fontSize: '2rem', marginBottom: 'var(--space-3)' }}>ðŸ</p>
           <p>No hackathons here yet.</p>
         </div>
       )}
@@ -218,3 +218,8 @@ export default function HackathonPage() {
     </div>
   )
 }
+
+
+
+
+

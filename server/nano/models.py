@@ -1,19 +1,21 @@
 import uuid
 from django.db import models
 from django.conf import settings
-from django.utils.text import slugify
+
 
 LANGUAGE_CHOICES = [
-    ('plain', 'Plain Text'),
+    ('plaintext', 'Plain Text'),
     ('python', 'Python'),
     ('javascript', 'JavaScript'),
     ('typescript', 'TypeScript'),
+    ('jsx', 'JSX'),
+    ('tsx', 'TSX'),
     ('html', 'HTML'),
     ('css', 'CSS'),
     ('json', 'JSON'),
-    ('markdown', 'Markdown'),
     ('bash', 'Bash'),
     ('sql', 'SQL'),
+    ('markdown', 'Markdown'),
 ]
 
 VISIBILITY_CHOICES = [
@@ -21,25 +23,46 @@ VISIBILITY_CHOICES = [
     ('private', 'Private'),
 ]
 
+FILE_TYPE_CHOICES = [
+    ('richtext', 'Rich Text'),
+    ('code', 'Code'),
+]
 
-class Nano(models.Model):
-    owner = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='nanos')
-    title = models.CharField(max_length=200, default='Untitled')
+
+class NanoFolder(models.Model):
+    owner = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='nano_folders')
+    name = models.CharField(max_length=200)
+    parent = models.ForeignKey('self', on_delete=models.CASCADE, null=True, blank=True, related_name='subfolders')
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ['name']
+        unique_together = ('owner', 'parent', 'name')
+
+    @property
+    def file_count(self):
+        return self.files.count()
+
+    def __str__(self):
+        return self.name
+
+
+class NanoFile(models.Model):
+    owner = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='nano_files')
+    folder = models.ForeignKey(NanoFolder, on_delete=models.CASCADE, null=True, blank=True, related_name='files')
+    name = models.CharField(max_length=200)
+    file_type = models.CharField(max_length=10, choices=FILE_TYPE_CHOICES, default='richtext')
+    language = models.CharField(max_length=20, choices=LANGUAGE_CHOICES, default='plaintext')
     content = models.TextField(blank=True)
-    language = models.CharField(max_length=20, choices=LANGUAGE_CHOICES, default='plain')
     visibility = models.CharField(max_length=10, choices=VISIBILITY_CHOICES, default='private')
-    slug = models.SlugField(unique=True, max_length=100, blank=True)
+    is_published = models.BooleanField(default=False)
+    published_at = models.DateTimeField(null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
     class Meta:
         ordering = ['-updated_at']
 
-    def save(self, *args, **kwargs):
-        if not self.slug:
-            base = slugify(self.title) or 'nano'
-            self.slug = base + '-' + str(uuid.uuid4())[:8]
-        super().save(*args, **kwargs)
-
     def __str__(self):
-        return self.title
+        return self.name
