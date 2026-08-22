@@ -1,4 +1,4 @@
-import api from './axios'
+﻿import api from './axios'
 
 export const nanoAPI = {
   // Folders
@@ -21,6 +21,38 @@ export const nanoAPI = {
   deleteFile: (id) => api.delete('/nano/files/' + id + '/').then((r) => r.data),
   publishFile: (id) => api.post('/nano/files/' + id + '/publish/').then((r) => r.data),
   unpublishFile: (id) => api.post('/nano/files/' + id + '/unpublish/').then((r) => r.data),
+
+  // Thumbnail
+  uploadThumbnail: (id, file) => {
+    const fd = new FormData()
+    fd.append('thumbnail', file)
+    return api.patch('/nano/files/' + id + '/thumbnail/', fd, {
+      headers: { 'Content-Type': 'multipart/form-data' },
+    }).then((r) => r.data)
+  },
+  uploadThumbnailUrl: (id, url) => {
+    const fd = new FormData()
+    fd.append('thumbnail_url', url)
+    return api.patch('/nano/files/' + id + '/thumbnail/', fd, {
+      headers: { 'Content-Type': 'multipart/form-data' },
+    }).then((r) => r.data)
+  },
+  removeThumbnail: (id) => {
+    const fd = new FormData()
+    fd.append('remove', '1')
+    return api.patch('/nano/files/' + id + '/thumbnail/', fd, {
+      headers: { 'Content-Type': 'multipart/form-data' },
+    }).then((r) => r.data)
+  },
+
+  // Inline image upload
+  uploadInlineImage: (file) => {
+    const fd = new FormData()
+    fd.append('image', file)
+    return api.post('/nano/images/', fd, {
+      headers: { 'Content-Type': 'multipart/form-data' },
+    }).then((r) => r.data)
+  },
 
   // Feed
   getFeed: () => api.get('/nano/feed/').then((r) => r.data),

@@ -1,9 +1,10 @@
-import { useState, lazy, Suspense } from 'react'
+﻿import { useState, lazy, Suspense, useRef } from 'react'
 import {
   useFolders, useFiles, useFile,
   useCreateFolder, useDeleteFolder,
   useCreateFile, useUpdateFile, useDeleteFile,
   usePublishFile, useUnpublishFile,
+  useUploadThumbnail, useUploadThumbnailUrl, useRemoveThumbnail,
 } from '../../hooks/useNano'
 
 const NenogramEditor = lazy(() => import('../../components/workspace/NenogramEditor'))
@@ -17,7 +18,6 @@ const langDot = {
   markdown:'#083fa1', bash:'#22c55e', sql:'#e38c00', plaintext:'#9ca3af',
 }
 
-// ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ Icons ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬
 const IFolder = ({ size=20, color='var(--accent)' }) => (
   <svg width={size} height={size} fill='none' stroke={color} strokeWidth='1.5' viewBox='0 0 24 24'>
     <path d='M22 19a2 2 0 01-2 2H4a2 2 0 01-2-2V5a2 2 0 012-2h5l2 3h9a2 2 0 012 2z'/>
@@ -56,8 +56,14 @@ const ILock = () => (
     <path d='M7 11V7a5 5 0 0110 0v4'/>
   </svg>
 )
+const IImage = () => (
+  <svg width='14' height='14' fill='none' stroke='currentColor' strokeWidth='2' viewBox='0 0 24 24'>
+    <rect x='3' y='3' width='18' height='18' rx='2'/><circle cx='8.5' cy='8.5' r='1.5'/>
+    <polyline points='21 15 16 10 5 21'/>
+  </svg>
+)
 
-// ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ Modals ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬
+// ── Modals ──────────────────────────────────────────────────────
 function NewFolderModal({ currentFolderId, onClose }) {
   const [name, setName] = useState('')
   const createFolder = useCreateFolder()
@@ -135,16 +141,113 @@ function NewFileModal({ currentFolderId, onClose, onCreate }) {
   )
 }
 
-// ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ Editor View ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬
+// ── Thumbnail Panel ────────────────────────────────────────────
+function ThumbnailPanel({ fileId, currentUrl }) {
+  const fileInputRef    = useRef(null)
+  const [urlInput, setUrlInput] = useState('')
+  const [urlMode, setUrlMode]   = useState(false)
+  const [dragOver, setDragOver] = useState(false)
+
+  const uploadFile = useUploadThumbnail()
+  const uploadUrl  = useUploadThumbnailUrl()
+  const remove     = useRemoveThumbnail()
+
+  const handleFile = (file) => {
+    if (!file) return
+    uploadFile.mutate({ id: fileId, file })
+  }
+
+  const handleUrlSubmit = () => {
+    if (!urlInput.trim()) return
+    uploadUrl.mutate({ id: fileId, url: urlInput.trim() }, {
+      onSuccess: () => setUrlInput(''),
+    })
+    setUrlMode(false)
+  }
+
+  const busy = uploadFile.isPending || uploadUrl.isPending || remove.isPending
+
+  return (
+    <div style={{ borderBottom: '1px solid var(--border)', background: 'var(--bg-secondary)', padding: '12px 20px', flexShrink: 0 }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: currentUrl || urlMode ? 10 : 0 }}>
+        <IImage />
+        <span style={{ fontSize: 12, fontWeight: 600, color: 'var(--text-secondary)', letterSpacing: '0.05em', textTransform: 'uppercase' }}>Thumbnail</span>
+        <div style={{ marginLeft: 'auto', display: 'flex', gap: 6 }}>
+          <button onClick={() => fileInputRef.current?.click()} disabled={busy}
+            style={{ fontSize: 11, padding: '3px 10px', background: 'var(--bg-tertiary)', color: 'var(--text-secondary)', border: '1px solid var(--border)', borderRadius: 'var(--radius-full)', cursor: 'pointer' }}>
+            Upload file
+          </button>
+          <button onClick={() => setUrlMode(v => !v)} disabled={busy}
+            style={{ fontSize: 11, padding: '3px 10px', background: urlMode ? 'var(--accent-dim)' : 'var(--bg-tertiary)', color: urlMode ? 'var(--accent)' : 'var(--text-secondary)', border: '1px solid ' + (urlMode ? 'var(--border-accent)' : 'var(--border)'), borderRadius: 'var(--radius-full)', cursor: 'pointer' }}>
+            Paste URL
+          </button>
+          {currentUrl && (
+            <button onClick={() => remove.mutate({ id: fileId })} disabled={busy}
+              style={{ fontSize: 11, padding: '3px 10px', background: 'var(--bg-tertiary)', color: 'var(--danger)', border: '1px solid var(--border)', borderRadius: 'var(--radius-full)', cursor: 'pointer' }}>
+              Remove
+            </button>
+          )}
+        </div>
+      </div>
+
+      {/* URL input */}
+      {urlMode && (
+        <div style={{ display: 'flex', gap: 6, marginBottom: 8 }}>
+          <input
+            autoFocus
+            value={urlInput}
+            onChange={e => setUrlInput(e.target.value)}
+            onKeyDown={e => { if (e.key === 'Enter') handleUrlSubmit(); if (e.key === 'Escape') setUrlMode(false) }}
+            placeholder="https://example.com/image.jpg"
+            style={{ flex: 1, background: 'var(--bg-tertiary)', border: '1px solid var(--border)', borderRadius: 'var(--radius-sm)', color: 'var(--text-primary)', padding: '6px 10px', fontSize: 12 }}
+          />
+          <button onClick={handleUrlSubmit} disabled={busy}
+            style={{ background: 'var(--accent)', color: '#fff', border: 'none', borderRadius: 'var(--radius-sm)', padding: '6px 14px', fontWeight: 600, cursor: 'pointer', fontSize: 12 }}>
+            {uploadUrl.isPending ? '...' : 'Set'}
+          </button>
+        </div>
+      )}
+
+      {/* Drag & drop zone or preview */}
+      {currentUrl ? (
+        <div style={{ position: 'relative', display: 'inline-block' }}
+          onDragOver={e => { e.preventDefault(); setDragOver(true) }}
+          onDragLeave={() => setDragOver(false)}
+          onDrop={e => { e.preventDefault(); setDragOver(false); const f = e.dataTransfer.files[0]; if (f) handleFile(f) }}>
+          <img src={currentUrl} alt="thumbnail"
+            style={{ height: 80, maxWidth: 220, objectFit: 'cover', borderRadius: 'var(--radius-md)', border: dragOver ? '2px dashed var(--accent)' : '1px solid var(--border)', display: 'block' }} />
+          {dragOver && (
+            <div style={{ position: 'absolute', inset: 0, background: 'rgba(0,0,0,0.5)', borderRadius: 'var(--radius-md)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff', fontSize: 12 }}>Drop to replace</div>
+          )}
+        </div>
+      ) : (
+        <div
+          onDragOver={e => { e.preventDefault(); setDragOver(true) }}
+          onDragLeave={() => setDragOver(false)}
+          onDrop={e => { e.preventDefault(); setDragOver(false); const f = e.dataTransfer.files[0]; if (f) handleFile(f) }}
+          style={{ border: '2px dashed ' + (dragOver ? 'var(--accent)' : 'var(--border)'), borderRadius: 'var(--radius-md)', padding: '16px 24px', textAlign: 'center', color: 'var(--text-muted)', fontSize: 12, background: dragOver ? 'var(--accent-dim)' : 'transparent', transition: 'all 0.15s', cursor: 'pointer' }}
+          onClick={() => fileInputRef.current?.click()}
+        >
+          {busy ? 'Uploading...' : 'Drag & drop an image here, or click to upload'}
+        </div>
+      )}
+
+      <input ref={fileInputRef} type="file" accept="image/*" style={{ display: 'none' }}
+        onChange={e => { if (e.target.files[0]) handleFile(e.target.files[0]); e.target.value = '' }} />
+    </div>
+  )
+}
+
+// ── Editor View ─────────────────────────────────────────────────
 function EditorView({ fileId, onBack }) {
   const { data: file, isLoading } = useFile(fileId)
-  const updateFile   = useUpdateFile()
-  const publishFile  = usePublishFile()
+  const updateFile    = useUpdateFile()
+  const publishFile   = usePublishFile()
   const unpublishFile = useUnpublishFile()
-  const [saveStatus, setSaveStatus]   = useState('saved')
+  const [saveStatus, setSaveStatus]     = useState('saved')
   const [localContent, setLocalContent] = useState(null)
-  const [editingName, setEditingName] = useState(false)
-  const [nameVal, setNameVal]         = useState('')
+  const [editingName, setEditingName]   = useState(false)
+  const [nameVal, setNameVal]           = useState('')
 
   const handleChange = (val) => { setLocalContent(val); setSaveStatus('unsaved') }
   const handleSave = (val) => {
@@ -162,9 +265,7 @@ function EditorView({ fileId, onBack }) {
   }
   const toggleVisibility = () => {
     const next = file.visibility === 'public' ? 'private' : 'public'
-    if (next === 'private' && file.is_published) {
-      unpublishFile.mutate(fileId)
-    }
+    if (next === 'private' && file.is_published) unpublishFile.mutate(fileId)
     updateFile.mutate({ id: fileId, data: { visibility: next } })
   }
   const handlePublish = () => {
@@ -177,59 +278,65 @@ function EditorView({ fileId, onBack }) {
   return (
     <div onClick={onBack} style={{ position:'fixed', inset:0, background:'rgba(0,0,0,0.6)', zIndex:500, display:'flex', alignItems:'center', justifyContent:'center', padding:'20px' }}>
       <div onClick={e => e.stopPropagation()} style={{ background:'var(--bg-primary)', border:'1px solid var(--border)', borderRadius:'var(--radius-xl)', width:'100%', maxWidth:'1000px', height:'85vh', display:'flex', flexDirection:'column', boxShadow:'var(--shadow-lg)', overflow:'hidden' }}>
-      {/* Topbar */}
-      <div style={{ display:'flex', alignItems:'center', gap:'10px', padding:'10px 16px', borderBottom:'1px solid var(--border)', background:'var(--bg-secondary)', flexShrink:0, flexWrap:'wrap' }}>
-        <button onClick={onBack} style={{ background:'none', border:'none', color:'var(--text-secondary)', cursor:'pointer', display:'flex', alignItems:'center', padding:'4px 6px', borderRadius:'var(--radius-sm)' }}><IBack /></button>
-        {editingName ? (
-          <input value={nameVal} onChange={e => setNameVal(e.target.value)} onBlur={handleRename} onKeyDown={e => e.key==='Enter' && handleRename()} autoFocus
-            style={{ background:'var(--bg-tertiary)', border:'1px solid var(--border-accent)', borderRadius:'var(--radius-sm)', color:'var(--text-primary)', padding:'4px 8px', fontSize:'14px', fontWeight:600 }} />
-        ) : (
-          <span onClick={() => { setEditingName(true); setNameVal(file.name) }} style={{ color:'var(--text-primary)', fontWeight:600, cursor:'text', fontSize:'14px' }}>{file.name}</span>
-        )}
-        {/* Visibility toggle */}
-        <button onClick={toggleVisibility} style={{
-          display:'flex', alignItems:'center', gap:'5px',
-          padding:'4px 10px', fontSize:'11px', fontFamily:'var(--font-mono)',
-          background: file.visibility==='public' ? 'var(--accent-dim)' : 'var(--bg-tertiary)',
-          color: file.visibility==='public' ? 'var(--accent)' : 'var(--text-muted)',
-          border:'1px solid ' + (file.visibility==='public' ? 'var(--border-accent)' : 'var(--border)'),
-          borderRadius:'var(--radius-full)', cursor:'pointer',
-        }}>
-          {file.visibility === 'public' ? <IGlobe /> : <ILock />}
-          {file.visibility}
-        </button>
-        {/* Publish button ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â only if public */}
-        {file.visibility === 'public' && (
-          <button onClick={handlePublish} style={{
-            padding:'4px 12px', fontSize:'11px', fontWeight:600,
-            background: file.is_published ? 'var(--bg-tertiary)' : 'var(--accent)',
-            color: file.is_published ? 'var(--text-muted)' : '#fff',
-            border:'1px solid ' + (file.is_published ? 'var(--border)' : 'transparent'),
+
+        {/* Topbar */}
+        <div style={{ display:'flex', alignItems:'center', gap:'10px', padding:'10px 16px', borderBottom:'1px solid var(--border)', background:'var(--bg-secondary)', flexShrink:0, flexWrap:'wrap' }}>
+          <button onClick={onBack} style={{ background:'none', border:'none', color:'var(--text-secondary)', cursor:'pointer', display:'flex', alignItems:'center', padding:'4px 6px', borderRadius:'var(--radius-sm)' }}><IBack /></button>
+          {editingName ? (
+            <input value={nameVal} onChange={e => setNameVal(e.target.value)} onBlur={handleRename} onKeyDown={e => e.key==='Enter' && handleRename()} autoFocus
+              style={{ background:'var(--bg-tertiary)', border:'1px solid var(--border-accent)', borderRadius:'var(--radius-sm)', color:'var(--text-primary)', padding:'4px 8px', fontSize:'14px', fontWeight:600 }} />
+          ) : (
+            <span onClick={() => { setEditingName(true); setNameVal(file.name) }} style={{ color:'var(--text-primary)', fontWeight:600, cursor:'text', fontSize:'14px' }}>{file.name}</span>
+          )}
+          <button onClick={toggleVisibility} style={{
+            display:'flex', alignItems:'center', gap:'5px',
+            padding:'4px 10px', fontSize:'11px', fontFamily:'var(--font-mono)',
+            background: file.visibility==='public' ? 'var(--accent-dim)' : 'var(--bg-tertiary)',
+            color: file.visibility==='public' ? 'var(--accent)' : 'var(--text-muted)',
+            border:'1px solid ' + (file.visibility==='public' ? 'var(--border-accent)' : 'var(--border)'),
             borderRadius:'var(--radius-full)', cursor:'pointer',
           }}>
-            {file.is_published ? 'Unpublish' : 'Publish to Today'}
+            {file.visibility === 'public' ? <IGlobe /> : <ILock />}
+            {file.visibility}
           </button>
-        )}
-        <span style={{ marginLeft:'auto', color: saveStatus==='saved' ? 'var(--success)' : saveStatus==='error' ? 'var(--danger)' : 'var(--text-muted)', fontSize:'11px', fontFamily:'var(--font-mono)' }}>{saveStatus}</span>
-        {file.file_type === 'richtext' && saveStatus === 'unsaved' && (
-          <button onClick={() => handleSave()} style={{ background:'var(--accent)', color:'#fff', border:'none', borderRadius:'var(--radius-sm)', padding:'5px 12px', fontWeight:600, cursor:'pointer', fontSize:'12px' }}>Save</button>
-        )}
-      </div>
-      {/* Editor */}
-      <div style={{ flex:1, overflow:'hidden' }}>
-        <Suspense fallback={<div style={{ padding:32, color:'var(--text-muted)', fontSize:'13px' }}>Loading editor...</div>}>
-          {file.file_type === 'richtext' ? (
-            <NenogramEditor content={localContent ?? file.content} onChange={handleChange} />
-          ) : (
-            <CodeEditor content={localContent ?? file.content} language={file.language} onChange={handleChange} onSave={handleSave} />
+          {file.visibility === 'public' && (
+            <button onClick={handlePublish} style={{
+              padding:'4px 12px', fontSize:'11px', fontWeight:600,
+              background: file.is_published ? 'var(--bg-tertiary)' : 'var(--accent)',
+              color: file.is_published ? 'var(--text-muted)' : '#fff',
+              border:'1px solid ' + (file.is_published ? 'var(--border)' : 'transparent'),
+              borderRadius:'var(--radius-full)', cursor:'pointer',
+            }}>
+              {file.is_published ? 'Unpublish' : 'Publish to Today'}
+            </button>
           )}
-        </Suspense>
+          <span style={{ marginLeft:'auto', color: saveStatus==='saved' ? 'var(--success)' : saveStatus==='error' ? 'var(--danger)' : 'var(--text-muted)', fontSize:'11px', fontFamily:'var(--font-mono)' }}>{saveStatus}</span>
+          {file.file_type === 'richtext' && saveStatus === 'unsaved' && (
+            <button onClick={() => handleSave()} style={{ background:'var(--accent)', color:'#fff', border:'none', borderRadius:'var(--radius-sm)', padding:'5px 12px', fontWeight:600, cursor:'pointer', fontSize:'12px' }}>Save</button>
+          )}
+        </div>
+
+        {/* Thumbnail panel — richtext only */}
+        {file.file_type === 'richtext' && (
+          <ThumbnailPanel fileId={fileId} currentUrl={file.thumbnail_url} />
+        )}
+
+        {/* Editor */}
+        <div style={{ flex:1, overflow:'hidden' }}>
+          <Suspense fallback={<div style={{ padding:32, color:'var(--text-muted)', fontSize:'13px' }}>Loading editor...</div>}>
+            {file.file_type === 'richtext' ? (
+              <NenogramEditor content={localContent ?? file.content} onChange={handleChange} fileId={fileId} />
+            ) : (
+              <CodeEditor content={localContent ?? file.content} language={file.language} onChange={handleChange} onSave={handleSave} />
+            )}
+          </Suspense>
+        </div>
       </div>
     </div>
-  </div>
   )
 }
-// ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ File Manager View ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬
+
+// ── File Manager View ─────────────────────────────────────────────
 function FileManagerView({ onOpenFile }) {
   const [currentFolderId, setCurrentFolderId] = useState(null)
   const [breadcrumb, setBreadcrumb]           = useState([{ id: null, name: 'Nano' }])
@@ -269,7 +376,6 @@ function FileManagerView({ onOpenFile }) {
 
   return (
     <div style={{ maxWidth:'960px' }} onClick={() => setContextMenu(null)}>
-      {/* Header */}
       <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:'24px', flexWrap:'wrap', gap:'12px' }}>
         <div>
           <div style={{ display:'flex', alignItems:'center', gap:'6px', marginBottom:'4px' }}>
@@ -290,11 +396,9 @@ function FileManagerView({ onOpenFile }) {
         </div>
       </div>
 
-      {/* Search */}
       <input value={search} onChange={e => setSearch(e.target.value)} placeholder='Search files and folders...'
         style={{ width:'100%', boxSizing:'border-box', background:'var(--bg-secondary)', border:'1px solid var(--border)', borderRadius:'var(--radius-md)', color:'var(--text-primary)', padding:'10px 14px', fontSize:'13px', marginBottom:'24px', outline:'none' }} />
 
-      {/* Folders */}
       {filteredFolders.length > 0 && (
         <>
           <p style={{ color:'var(--text-muted)', fontSize:'11px', textTransform:'uppercase', letterSpacing:'0.08em', marginBottom:'10px', marginTop:0 }}>Folders</p>
@@ -313,38 +417,42 @@ function FileManagerView({ onOpenFile }) {
         </>
       )}
 
-      {/* Files */}
       {filteredFiles.length > 0 && (
         <>
           <p style={{ color:'var(--text-muted)', fontSize:'11px', textTransform:'uppercase', letterSpacing:'0.08em', marginBottom:'10px', marginTop:0 }}>Files</p>
           <div style={{ display:'grid', gridTemplateColumns:'repeat(auto-fill, minmax(200px, 1fr))', gap:'10px' }}>
             {filteredFiles.map(file => (
               <div key={file.id} onDoubleClick={() => onOpenFile(file.id)} onContextMenu={e => handleContextMenu(e,'file',file)}
-                style={{ background:'var(--bg-secondary)', border:'1px solid var(--border)', borderRadius:'var(--radius-lg)', padding:'16px', cursor:'pointer', transition:'border-color var(--transition), box-shadow var(--transition)', display:'flex', flexDirection:'column', gap:'10px' }}
+                style={{ background:'var(--bg-secondary)', border:'1px solid var(--border)', borderRadius:'var(--radius-lg)', overflow:'hidden', cursor:'pointer', transition:'border-color var(--transition), box-shadow var(--transition)' }}
                 onMouseEnter={e => { e.currentTarget.style.borderColor='var(--border-accent)'; e.currentTarget.style.boxShadow='var(--shadow-accent)' }}
                 onMouseLeave={e => { e.currentTarget.style.borderColor='var(--border)'; e.currentTarget.style.boxShadow='none' }}>
-                <div style={{ display:'flex', alignItems:'center', gap:'8px' }}>
-                  {file.file_type === 'richtext' ? <IFileText size={18} /> : <ICode size={18} />}
-                  <span style={{ color:'var(--text-primary)', fontSize:'13px', fontWeight:600, overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap', flex:1 }}>{file.name}</span>
-                </div>
-                <div style={{ display:'flex', alignItems:'center', gap:'6px', flexWrap:'wrap' }}>
-                  <span style={{ display:'inline-flex', alignItems:'center', gap:'4px', fontSize:'11px', fontFamily:'var(--font-mono)', color:'var(--text-muted)' }}>
-                    <span style={{ width:'6px', height:'6px', borderRadius:'50%', background: langDot[file.language] ?? '#9ca3af', display:'inline-block' }} />
-                    {file.language}
-                  </span>
-                  <span style={{
-                    display:'inline-flex', alignItems:'center', gap:'4px',
-                    fontSize:'10px', fontFamily:'var(--font-mono)', fontWeight:500,
-                    background: file.visibility==='public' ? 'var(--accent-dim)' : 'var(--bg-tertiary)',
-                    color: file.visibility==='public' ? 'var(--accent)' : 'var(--text-muted)',
-                    border:'1px solid ' + (file.visibility==='public' ? 'var(--border-accent)' : 'var(--border)'),
-                    borderRadius:'var(--radius-full)', padding:'2px 7px',
-                  }}>
-                    {file.visibility === 'public' ? <IGlobe /> : <ILock />} {file.visibility}
-                  </span>
-                  {file.is_published && (
-                    <span style={{ fontSize:'10px', fontFamily:'var(--font-mono)', fontWeight:500, background:'rgba(34,197,94,0.12)', color:'var(--success)', border:'1px solid rgba(34,197,94,0.25)', borderRadius:'var(--radius-full)', padding:'2px 7px' }}>published</span>
-                  )}
+                {file.thumbnail_url && (
+                  <img src={file.thumbnail_url} alt="" style={{ width:'100%', height:90, objectFit:'cover', display:'block' }} />
+                )}
+                <div style={{ padding:'12px' }}>
+                  <div style={{ display:'flex', alignItems:'center', gap:'8px', marginBottom:8 }}>
+                    {file.file_type === 'richtext' ? <IFileText size={16} /> : <ICode size={16} />}
+                    <span style={{ color:'var(--text-primary)', fontSize:'13px', fontWeight:600, overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap', flex:1 }}>{file.name}</span>
+                  </div>
+                  <div style={{ display:'flex', alignItems:'center', gap:'6px', flexWrap:'wrap' }}>
+                    <span style={{ display:'inline-flex', alignItems:'center', gap:'4px', fontSize:'11px', fontFamily:'var(--font-mono)', color:'var(--text-muted)' }}>
+                      <span style={{ width:'6px', height:'6px', borderRadius:'50%', background: langDot[file.language] ?? '#9ca3af', display:'inline-block' }} />
+                      {file.language}
+                    </span>
+                    <span style={{
+                      display:'inline-flex', alignItems:'center', gap:'4px',
+                      fontSize:'10px', fontFamily:'var(--font-mono)', fontWeight:500,
+                      background: file.visibility==='public' ? 'var(--accent-dim)' : 'var(--bg-tertiary)',
+                      color: file.visibility==='public' ? 'var(--accent)' : 'var(--text-muted)',
+                      border:'1px solid ' + (file.visibility==='public' ? 'var(--border-accent)' : 'var(--border)'),
+                      borderRadius:'var(--radius-full)', padding:'2px 7px',
+                    }}>
+                      {file.visibility === 'public' ? <IGlobe /> : <ILock />} {file.visibility}
+                    </span>
+                    {file.is_published && (
+                      <span style={{ fontSize:'10px', fontFamily:'var(--font-mono)', fontWeight:500, background:'rgba(34,197,94,0.12)', color:'var(--success)', border:'1px solid rgba(34,197,94,0.25)', borderRadius:'var(--radius-full)', padding:'2px 7px' }}>published</span>
+                    )}
+                  </div>
                 </div>
               </div>
             ))}
@@ -352,7 +460,6 @@ function FileManagerView({ onOpenFile }) {
         </>
       )}
 
-      {/* Empty state */}
       {filteredFolders.length === 0 && filteredFiles.length === 0 && (
         <div style={{ textAlign:'center', padding:'80px 20px' }}>
           <div style={{ width:'54px', height:'54px', borderRadius:'16px', background:'var(--accent-dim)', border:'1px solid var(--border-accent)', display:'flex', alignItems:'center', justifyContent:'center', margin:'0 auto 16px' }}>
@@ -364,7 +471,6 @@ function FileManagerView({ onOpenFile }) {
         </div>
       )}
 
-      {/* Context Menu */}
       {contextMenu && (
         <div style={{ position:'fixed', top:contextMenu.y, left:contextMenu.x, background:'var(--bg-elevated)', border:'1px solid var(--border)', borderRadius:'var(--radius-md)', padding:'4px', zIndex:1000, minWidth:160, boxShadow:'0 8px 32px rgba(0,0,0,0.4)' }}>
           {contextMenu.type === 'folder' && (
@@ -388,12 +494,9 @@ function FileManagerView({ onOpenFile }) {
   )
 }
 
-// ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ Page Root ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬
+// ── Page Root ──────────────────────────────────────────────────
 export default function NanoPage() {
   const [openFileId, setOpenFileId] = useState(null)
   if (openFileId) return <EditorView fileId={openFileId} onBack={() => setOpenFileId(null)} />
   return <FileManagerView onOpenFile={setOpenFileId} />
 }
-
-
-

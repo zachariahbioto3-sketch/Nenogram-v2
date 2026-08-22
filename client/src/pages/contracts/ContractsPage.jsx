@@ -52,7 +52,7 @@ export default function ContractsPage() {
                 <div>
                   <div style={{ fontSize: "15px", fontWeight: 700, color: "var(--text-primary)" }}>{c.title}</div>
                   <div style={{ fontSize: "11px", color: "var(--text-muted)", fontFamily: "var(--font-mono)", marginTop: "3px" }}>
-                    {c.source === "job" ? "Job Contract" : "Gig Order"} · created {new Date(c.created_at).toLocaleDateString()}
+                    {c.source === "job" ? "Job Contract" : "Gig Order"} Â· created {new Date(c.created_at).toLocaleDateString()}
                   </div>
                 </div>
                 <span style={{ fontSize: "11px", padding: "3px 10px", borderRadius: "var(--radius-sm)", fontFamily: "var(--font-mono)", background: statusBg, color: statusColor }}>

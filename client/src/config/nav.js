@@ -1,5 +1,5 @@
 export const navLinks = [
-  { label: 'Dashboard',   path: '/',           icon: 'grid' },
+  { label: 'Dashboard',   path: '/dashboard',  icon: 'grid' },
   { label: 'Hub',         path: '/hub',        icon: 'hub' },
   { label: 'Marketplace', path: '/marketplace',icon: 'store' },
   { label: 'Wallet',      path: '/wallet',     icon: 'wallet' },

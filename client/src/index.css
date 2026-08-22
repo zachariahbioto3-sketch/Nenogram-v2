@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;1,9..40,400&family=JetBrains+Mono:wght@400;500;600&display=swap');
+﻿@import url('https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;1,9..40,400&family=JetBrains+Mono:wght@400;500;600&display=swap');
 @import 'tailwindcss';
 
 :root {
@@ -161,9 +161,17 @@ body::before {
   pointer-events: none;
   background-image: url('/bg-pattern.jpg');
   background-repeat: repeat;
-  background-size: 480px auto;
-  opacity: 0.07;
+  background-size: 280px auto;
+  opacity: 0.35;
   mix-blend-mode: multiply;
+}
+
+/* The source image has a white paper background. Invert it for the dark Luna
+   theme so the equations become a soft, visible pattern across the app. */
+[data-theme="luna"] body::before {
+  filter: invert(1);
+  mix-blend-mode: screen;
+  opacity: 0.16;
 }
 
 #root { position: relative; z-index: 1; }
@@ -181,3 +189,17 @@ p  { line-height: 1.65; color: var(--text-secondary); }
 a  { color: var(--accent); text-decoration: none; transition: color var(--transition); }
 a:hover { color: var(--accent-2); }
 code, pre { font-family: var(--font-mono); font-size: var(--text-sm); }
+
+/* Mobile Responsiveness */
+@media (max-width: 768px) {
+  aside[style*='position: fixed'] { display: none !important; }
+  main, [style*='margin-left'] { margin-left: 0 !important; padding: 12px !important; }
+  [style*='repeat(4, 1fr)'] { grid-template-columns: repeat(2, 1fr) !important; }
+  [style*='1fr 1fr'] { grid-template-columns: 1fr !important; }
+  [style*='1fr 280px'] { grid-template-columns: 1fr !important; }
+  [style*='repeat(3, 1fr)'] { grid-template-columns: repeat(2, 1fr) !important; }
+}
+@media (max-width: 480px) {
+  [style*='repeat(2, 1fr)'] { grid-template-columns: 1fr !important; }
+  [style*='repeat(4, 1fr)'] { grid-template-columns: 1fr !important; }
+}

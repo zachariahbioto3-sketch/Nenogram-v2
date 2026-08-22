@@ -23,7 +23,7 @@ export function useLogin() {
       setTokens(res.data.access, res.data.refresh)
       setUser(res.data.user)
       addNotification('Welcome back ' + res.data.user.username, 'success')
-      navigate('/')
+      navigate('/dashboard')
     },
     onError: (err) => {
       const data = err.response?.data
@@ -47,7 +47,7 @@ export function useRegister() {
       setTokens(res.data.access, res.data.refresh)
       setUser(res.data.user)
       addNotification('Account created successfully', 'success')
-      navigate('/')
+      navigate('/dashboard')
     },
     onError: (err) => {
       const errors = err.response?.data

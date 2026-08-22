@@ -1,8 +1,8 @@
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
+﻿import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { nanoAPI } from '../api/nano'
 import { useUIStore } from '../store/uiStore'
 
-// ── Folders ──────────────────────────────────────────────
+// Folders
 export const useFolders = (parentId) =>
   useQuery({
     queryKey: ['nano-folders', parentId ?? 'root'],
@@ -35,7 +35,7 @@ export const useDeleteFolder = () => {
   })
 }
 
-// ── Files ────────────────────────────────────────────────
+// Files
 export const useFiles = (folderId) =>
   useQuery({
     queryKey: ['nano-files', folderId ?? 'root'],
@@ -118,7 +118,47 @@ export const useUnpublishFile = () => {
   })
 }
 
-// ── Feed ─────────────────────────────────────────────────
+// Thumbnail
+export const useUploadThumbnail = () => {
+  const qc = useQueryClient()
+  const notify = useUIStore((s) => s.addNotification)
+  return useMutation({
+    mutationFn: ({ id, file }) => nanoAPI.uploadThumbnail(id, file),
+    onSuccess: (data) => {
+      qc.invalidateQueries({ queryKey: ['nano-file', data.id] })
+      notify('Thumbnail saved', 'success')
+    },
+    onError: () => notify('Thumbnail upload failed', 'error'),
+  })
+}
+
+export const useUploadThumbnailUrl = () => {
+  const qc = useQueryClient()
+  const notify = useUIStore((s) => s.addNotification)
+  return useMutation({
+    mutationFn: ({ id, url }) => nanoAPI.uploadThumbnailUrl(id, url),
+    onSuccess: (data) => {
+      qc.invalidateQueries({ queryKey: ['nano-file', data.id] })
+      notify('Thumbnail saved', 'success')
+    },
+    onError: () => notify('Failed to fetch image from URL', 'error'),
+  })
+}
+
+export const useRemoveThumbnail = () => {
+  const qc = useQueryClient()
+  const notify = useUIStore((s) => s.addNotification)
+  return useMutation({
+    mutationFn: ({ id }) => nanoAPI.removeThumbnail(id),
+    onSuccess: (data) => {
+      qc.invalidateQueries({ queryKey: ['nano-file', data.id] })
+      notify('Thumbnail removed', 'info')
+    },
+    onError: () => notify('Failed to remove thumbnail', 'error'),
+  })
+}
+
+// Feed
 export const useNanoFeed = () =>
   useQuery({
     queryKey: ['nano-feed'],

@@ -11,13 +11,13 @@ export default function Topbar() {
   const unreadCount = unread?.count ?? 0
 
   const currentPage = navLinks.find((l) => {
-    if (l.path === '/') return location.pathname === '/'
+    if (l.path === '/dashboard') return location.pathname === '/dashboard'
     return location.pathname.startsWith(l.path)
   })
   const pageTitle = currentPage?.label ?? 'Nenogram'
 
   return (
-    <header style={{ height: '64px', background: 'var(--bg-primary)', display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0 32px 0 4px', position: 'sticky', top: 0, zIndex: 50, borderBottom: '1px solid var(--border)' }}>
+    <header style={{ height: '64px', background: 'transparent', display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0 32px 0 4px', position: 'sticky', top: 0, zIndex: 50, borderBottom: '1px solid var(--border)' }}>
       <span style={{ fontSize: '17px', fontWeight: 600, color: 'var(--text-primary)', letterSpacing: '-0.2px' }}>
         {pageTitle}
       </span>

@@ -18,6 +18,7 @@ import NotificationsPage from './pages/notifications/NotificationsPage'
 import NegotiationRoomPage from './pages/negotiation/NegotiationRoomPage'
 import ContractsPage from './pages/contracts/ContractsPage'
 import NegotiationPage from './pages/negotiation/NegotiationRoomPage'
+import LandingPage from './pages/landing/LandingPage'
 
 const ProtectedRoute = ({ children }) => {
   const isAuthenticated = useAuthStore((s) => s.isAuthenticated)
@@ -29,10 +30,11 @@ export default function App() {
     <BrowserRouter>
       <Notifications />
       <Routes>
+        <Route path='/' element={<LandingPage />} />
         <Route path='/login'    element={<LoginPage />} />
         <Route path='/register' element={<RegisterPage />} />
-        <Route path='/' element={<ProtectedRoute><AppLayout /></ProtectedRoute>}>
-          <Route index                          element={<DashboardPage />} />
+        <Route element={<ProtectedRoute><AppLayout /></ProtectedRoute>}>
+          <Route path='dashboard'               element={<DashboardPage />} />
           <Route path='marketplace'             element={<MarketplacePage />} />
           <Route path='marketplace/jobs/:id'    element={<JobDetailPage />} />
           <Route path='wallet'                  element={<WalletPage />} />

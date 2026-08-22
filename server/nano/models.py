@@ -1,4 +1,5 @@
-import uuid
+﻿import uuid
+import os
 from django.db import models
 from django.conf import settings
 
@@ -29,6 +30,16 @@ FILE_TYPE_CHOICES = [
 ]
 
 
+def thumbnail_upload_path(instance, filename):
+    ext = os.path.splitext(filename)[1]
+    return f'nano/thumbnails/{uuid.uuid4()}{ext}'
+
+
+def inline_image_upload_path(instance, filename):
+    ext = os.path.splitext(filename)[1]
+    return f'nano/images/{uuid.uuid4()}{ext}'
+
+
 class NanoFolder(models.Model):
     owner = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='nano_folders')
     name = models.CharField(max_length=200)
@@ -55,6 +66,7 @@ class NanoFile(models.Model):
     file_type = models.CharField(max_length=10, choices=FILE_TYPE_CHOICES, default='richtext')
     language = models.CharField(max_length=20, choices=LANGUAGE_CHOICES, default='plaintext')
     content = models.TextField(blank=True)
+    thumbnail = models.ImageField(upload_to=thumbnail_upload_path, null=True, blank=True)
     visibility = models.CharField(max_length=10, choices=VISIBILITY_CHOICES, default='private')
     is_published = models.BooleanField(default=False)
     published_at = models.DateTimeField(null=True, blank=True)
@@ -66,3 +78,12 @@ class NanoFile(models.Model):
 
     def __str__(self):
         return self.name
+
+
+class NanoInlineImage(models.Model):
+    owner = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='nano_images')
+    image = models.ImageField(upload_to=inline_image_upload_path)
+    uploaded_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f'Image {self.pk} by {self.owner}'
